@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso al sistema del museo</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    main {
+      background: white;
+      width: 100%;
+      max-width: 400px;
+      padding: 28px;
+      border-radius: 14px;
+      box-shadow: 0 5px 24px #00000012;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1769e0;
+    }
+
+    h2 {
+      font-size: 19px;
+      margin-top: 26px;
+    }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 14px;
+      background: #1769e0;
+      color: white;
+      border: 0;
+      border-radius: 7px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1054b8;
+    }
+
+    .mensaje {
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .separador {
+      border: 0;
+      border-top: 1px solid #ddd;
+      margin-top: 28px;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Mi sistema del museo</h1>
+
+    <h2>Crear cuenta</h2>
+
+    <form id="registro">
+      <label for="usuarioRegistro">Usuario</label>
+      <input
+        id="usuarioRegistro"
+        name="usuario"
+        required
+        minlength="3"
+        maxlength="50"
+        pattern="[a-zA-Z0-9_]+"
+        autocomplete="username"
+      >
+
+      <label for="passwordRegistro">Contraseña</label>
+      <input
+        id="passwordRegistro"
+        name="password"
+        type="password"
+        required
+        minlength="8"
+        autocomplete="new-password"
+      >
+
+      <button type="submit">Registrarme</button>
+
+      <p id="mensajeRegistro" class="mensaje" role="status"></p>
+    </form>
+
+    <hr class="separador">
+
+    <h2>Iniciar sesión</h2>
+
+    <form id="login">
+      <label for="usuarioLogin">Usuario</label>
+      <input
+        id="usuarioLogin"
+        name="usuario"
+        required
+        autocomplete="username"
+      >
+
+      <label for="passwordLogin">Contraseña</label>
+      <input
+        id="passwordLogin"
+        name="password"
+        type="password"
+        required
+        autocomplete="current-password"
+      >
+
+      <button type="submit">Iniciar sesión</button>
+
+      <p id="mensajeLogin" class="mensaje" role="status"></p>
+    </form>
+  </main>
+
+  <script>
+    const registro = document.getElementById('registro');
+    const login = document.getElementById('login');
+
+    async function enviarAPI(ruta, datos) {
+      const respuesta = await fetch(ruta, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datos)
+      });
+
+      const resultado = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          resultado.mensaje || 'Ocurrió un error'
+        );
+      }
+
+      return resultado;
+    }
+
+    // REGISTRO DE USUARIOS
+    registro.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+
+      const mensaje = document.getElementById('mensajeRegistro');
+      mensaje.textContent = 'Registrando...';
+
+      const datos = {
+        usuario: document.getElementById('usuarioRegistro').value.trim(),
+        password: document.getElementById('passwordRegistro').value
+      };
+
+      try {
+        const resultado = await enviarAPI('/api/registro', datos);
+
+        mensaje.textContent =
+          resultado.mensaje || 'Cuenta creada correctamente.';
+
+        registro.reset();
+
+      } catch (error) {
+        mensaje.textContent = error.message;
+      }
+    });
+
+    // INICIO DE SESIÓN
+    login.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+
+      const mensaje = document.getElementById('mensajeLogin');
+      mensaje.textContent = 'Comprobando datos...';
+
+      const datos = {
+        usuario: document.getElementById('usuarioLogin').value.trim(),
+        password: document.getElementById('passwordLogin').value
+      };
+
+      try {
+        const resultado = await enviarAPI('/api/login', datos);
+
+        // Guardar el token de autenticación
+        sessionStorage.setItem('token', resultado.token);
+
+        // Redirigir al panel de administración
+        if (resultado.rol === 'admin') {
+          mensaje.textContent = 'Acceso correcto. Abriendo el panel...';
+
+          window.location.href = '/panel.html';
+        } else {
+          sessionStorage.removeItem('token');
+
+          mensaje.textContent =
+            'Inicio de sesión correcto, pero tu usuario no tiene permisos de administrador.';
+        }
+
+      } catch (error) {
+        sessionStorage.removeItem('token');
+        mensaje.textContent = error.message;
+      }
+    });
+  </script>
+</body>
+</html>
