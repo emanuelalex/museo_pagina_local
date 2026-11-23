@@ -1,0 +1,676 @@
+
+<div class="reservations-page">
+
+  <!-- ENCABEZADO -->
+  <header class="page-header">
+    <div class="page-heading">
+      <p class="page-eyebrow">GESTIÓN DE VISITAS</p>
+      <h1>Reservaciones</h1>
+      <p class="page-description">
+        Consulta y administra las reservaciones del Museo Descubre.
+      </p>
+    </div>
+
+    <a class="btn-primary" routerLink="/reservaciones/nueva">
+      <span class="plus-icon">+</span>
+      Nueva reservación
+    </a>
+  </header>
+
+  <!-- TARJETA DE FILTROS -->
+  <section class="filters-card">
+
+    <div class="section-heading">
+      <h2>Buscar reservaciones</h2>
+      <p>Encuentra una visita utilizando los filtros disponibles.</p>
+    </div>
+
+    <div class="filters-grid">
+
+      <!-- BÚSQUEDA -->
+      <div class="filter-field search-field">
+        <label for="busqueda">Institución, CCT o folio</label>
+
+        <input
+          id="busqueda"
+          type="search"
+          name="busqueda"
+          placeholder="Buscar reservación..."
+          [(ngModel)]="busqueda"
+          (ngModelChange)="aplicarFiltros()"
+        />
+      </div>
+
+      <!-- FECHA -->
+      <div class="filter-field">
+        <label for="filtroFecha">Fecha de visita</label>
+
+        <input
+          id="filtroFecha"
+          type="date"
+          name="filtroFecha"
+          [(ngModel)]="filtroFecha"
+          (ngModelChange)="aplicarFiltros()"
+        />
+      </div>
+
+      <!-- SALA -->
+      <div class="filter-field">
+        <label for="filtroSala">Sala</label>
+
+        <select
+          id="filtroSala"
+          name="filtroSala"
+          [(ngModel)]="filtroSala"
+          (ngModelChange)="aplicarFiltros()"
+        >
+          <option value="">Todas las salas</option>
+
+          <option
+            *ngFor="let sala of salas"
+            [value]="sala"
+          >
+            {{ sala }}
+          </option>
+        </select>
+      </div>
+
+      <!-- ESTADO -->
+      <div class="filter-field">
+        <label for="filtroEstado">Estado</label>
+
+        <select
+          id="filtroEstado"
+          name="filtroEstado"
+          [(ngModel)]="filtroEstado"
+          (ngModelChange)="aplicarFiltros()"
+        >
+          <option value="">Todos los estados</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="Confirmada">Confirmada</option>
+          <option value="Cancelada">Cancelada</option>
+          <option value="Realizada">Realizada</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="filter-actions">
+      <button
+        type="button"
+        class="btn-clear"
+        (click)="limpiarFiltros()"
+      >
+        Limpiar filtros
+      </button>
+    </div>
+
+  </section>
+
+  <!-- TABLA DE RESERVACIONES -->
+  <section class="table-card">
+
+    <div class="table-header">
+      <div>
+        <h2>Listado de reservaciones</h2>
+        <p>
+          {{ reservacionesFiltradas.length }}
+          reservación(es) encontrada(s)
+        </p>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table class="reservations-table">
+
+        <thead>
+          <tr>
+            <th scope="col">Folio</th>
+            <th scope="col">Institución</th>
+            <th scope="col">Sala</th>
+            <th scope="col">Fecha y hora</th>
+            <th scope="col">Asistentes</th>
+            <th scope="col">Total</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr *ngFor="let reservacion of reservacionesPaginadas">
+
+            <!-- FOLIO -->
+            <td>
+              <span class="folio">
+                {{ reservacion.folio }}
+              </span>
+            </td>
+
+            <!-- INSTITUCIÓN -->
+            <td>
+              <div class="institution-cell">
+                <strong>{{ reservacion.institucion }}</strong>
+                <small>CCT: {{ reservacion.cct }}</small>
+              </div>
+            </td>
+
+            <!-- SALA -->
+            <td>
+              {{ reservacion.sala }}
+            </td>
+
+            <!-- FECHA Y HORA -->
+            <td>
+              <div class="date-cell">
+                <strong>
+                  {{ reservacion.fecha_visita | date:'dd/MM/yyyy':'UTC' }}
+                </strong>
+                <small>{{ reservacion.hora_llegada }} h</small>
+              </div>
+            </td>
+
+            <!-- ASISTENTES -->
+            <td>
+              {{ obtenerTotalAsistentes(reservacion) }}
+            </td>
+
+            <!-- TOTAL -->
+            <td>
+              <strong>
+                {{ reservacion.total | currency:'MXN':'symbol':'1.2-2' }}
+              </strong>
+            </td>
+
+            <!-- ESTADO -->
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="{
+                  'status-confirmed': reservacion.estado === 'Confirmada',
+                  'status-pending': reservacion.estado === 'Pendiente',
+                  'status-cancelled': reservacion.estado === 'Cancelada',
+                  'status-completed': reservacion.estado === 'Realizada'
+                }"
+              >
+                {{ reservacion.estado }}
+              </span>
+            </td>
+
+            <!-- ACCIONES -->
+            <td>
+              <div class="table-actions">
+
+                <button
+                    type="button"
+                    class="action-btn"
+                    title="Ver reservación"
+                    [attr.aria-label]="'Ver ' + reservacion.folio"
+                    (click)="verReservacion(reservacion)"
+                >
+                  Ver
+                </button>
+
+                <button
+                  type="button"
+                  class="action-btn"
+                  title="Editar reservación"
+                  [attr.aria-label]="'Editar ' + reservacion.folio"
+                  (click)="abrirEdicion(reservacion)"
+                  [disabled]="reservacion.estado === 'Cancelada' || reservacion.estado === 'Realizada'"
+                 
+                >
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  class="action-btn action-danger"
+                  title="Cancelar reservación"
+                  [attr.aria-label]="'Cancelar ' + reservacion.folio"
+                  disabled
+                >
+                  Cancelar
+                </button>
+
+              </div>
+            </td>
+
+          </tr>
+
+          <!-- SIN RESULTADOS -->
+          <tr *ngIf="reservacionesFiltradas.length === 0">
+            <td colspan="8" class="empty-state">
+              <div class="empty-state-content">
+                <span class="empty-icon">⌕</span>
+                <h3>No se encontraron reservaciones</h3>
+                <p>
+                  Intenta cambiar los filtros o realizar otra búsqueda.
+                </p>
+
+                <button
+                  type="button"
+                  class="btn-clear"
+                  (click)="limpiarFiltros()"
+                >
+                  Limpiar filtros
+                </button>
+              </div>
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+    </div>
+
+    <!-- PAGINACIÓN -->
+    <footer
+      class="pagination-footer"
+      *ngIf="reservacionesFiltradas.length > 0"
+    >
+
+      <p>
+        Mostrando
+        {{
+          (paginaActual - 1) * registrosPorPagina + 1
+        }}
+        -
+        {{
+          paginaActual * registrosPorPagina >
+          reservacionesFiltradas.length
+            ? reservacionesFiltradas.length
+            : paginaActual * registrosPorPagina
+        }}
+        de {{ reservacionesFiltradas.length }} registros
+      </p>
+
+      <div class="pagination-controls">
+
+        <button
+          type="button"
+          class="page-btn"
+          [disabled]="paginaActual === 1"
+          (click)="cambiarPagina(paginaActual - 1)"
+        >
+          Anterior
+        </button>
+
+        <span class="page-indicator">
+          Página {{ paginaActual }} de {{ totalPaginas }}
+        </span>
+
+        <button
+          type="button"
+          class="page-btn"
+          [disabled]="paginaActual === totalPaginas"
+          (click)="cambiarPagina(paginaActual + 1)"
+        >
+          Siguiente
+        </button>
+
+      </div>
+
+    </footer>
+
+  </section>
+
+</div>
+
+<!-- VENTANA DE DETALLE DE RESERVACIÓN -->
+<div
+  class="modal-overlay"
+  *ngIf="reservacionSeleccionada as detalle"
+  (click)="cerrarDetalle()"
+>
+  <section
+    class="detail-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="detalleTitulo"
+    (click)="$event.stopPropagation()"
+  >
+
+    <div class="modal-header">
+      <div>
+        <p class="modal-eyebrow">DETALLE DE VISITA</p>
+        <h2 id="detalleTitulo">
+          Reservación {{ detalle.folio }}
+        </h2>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close"
+        aria-label="Cerrar detalle"
+        (click)="cerrarDetalle()"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="modal-body">
+
+      <h3>Información de la institución</h3>
+
+      <div class="detail-grid">
+        <div class="detail-field">
+          <span>Institución</span>
+          <strong>{{ detalle.institucion }}</strong>
+        </div>
+
+        <div class="detail-field">
+          <span>CCT</span>
+          <strong>{{ detalle.cct }}</strong>
+        </div>
+
+        <div class="detail-field">
+          <span>Responsable</span>
+          <strong>{{ detalle.responsable }}</strong>
+        </div>
+
+        <div class="detail-field">
+          <span>Teléfono</span>
+          <strong>{{ detalle.telefono }}</strong>
+        </div>
+      </div>
+
+      <h3>Información de la visita</h3>
+
+      <div class="detail-grid">
+        <div class="detail-field">
+          <span>Sala</span>
+          <strong>{{ detalle.sala }}</strong>
+        </div>
+
+        <div class="detail-field">
+          <span>Fecha</span>
+          <strong>
+            {{ detalle.fecha_visita | date:'dd/MM/yyyy':'UTC' }}
+          </strong>
+        </div>
+
+        <div class="detail-field">
+          <span>Horario</span>
+          <strong>{{ detalle.hora_llegada }} h</strong>
+        </div>
+
+        <div class="detail-field">
+          <span>Estado</span>
+          <span
+            class="status-badge"
+            [ngClass]="{
+              'status-confirmed': detalle.estado === 'Confirmada',
+              'status-pending': detalle.estado === 'Pendiente',
+              'status-cancelled': detalle.estado === 'Cancelada',
+              'status-completed': detalle.estado === 'Realizada'
+            }"
+          >
+            {{ detalle.estado }}
+          </span>
+        </div>
+
+        <div class="detail-field">
+          <span>Alumnos</span>
+          <strong>{{ detalle.cantidad_alumnos }}</strong>
+        </div>
+
+        <div class="detail-field">
+          <span>Maestros</span>
+          <strong>{{ detalle.cantidad_maestros }}</strong>
+        </div>
+
+        <div class="detail-field">
+          <span>Total de asistentes</span>
+          <strong>{{ obtenerTotalAsistentes(detalle) }}</strong>
+        </div>
+
+        <div class="detail-field">
+          <span>Importe estimado</span>
+          <strong>
+            {{ detalle.total | currency:'MXN':'symbol':'1.2-2' }}
+          </strong>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button
+        type="button"
+        class="btn-clear"
+        (click)="cerrarDetalle()"
+      >
+        Cerrar
+      </button>
+    </div>
+
+  </section>
+</div>
+
+<!-- ==========================================
+     VENTANA EDITAR RESERVACIÓN
+     ========================================== -->
+
+<div
+  class="modal-overlay"
+  *ngIf="reservacionEnEdicion as edicion"
+  (click)="cerrarEdicion()"
+>
+  <section
+    class="detail-modal edit-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="editarTitulo"
+    (click)="$event.stopPropagation()"
+  >
+
+    <!-- ENCABEZADO -->
+    <div class="modal-header">
+      <div>
+        <p class="modal-eyebrow">GESTIÓN DE RESERVACIONES</p>
+        <h2 id="editarTitulo">
+          Editar reservación {{ edicion.folio }}
+        </h2>
+      </div>
+
+      <button
+        type="button"
+        class="modal-close"
+        aria-label="Cerrar edición"
+        (click)="cerrarEdicion()"
+      >
+        ×
+      </button>
+    </div>
+
+    <!-- FORMULARIO -->
+    <form
+      class="edit-form"
+      (ngSubmit)="guardarEdicion()"
+      novalidate
+    >
+
+      <div class="modal-body">
+
+        <h3>Información de la institución</h3>
+
+        <div class="edit-grid">
+
+          <div class="edit-field">
+            <label for="editInstitucion">Institución *</label>
+            <input
+              id="editInstitucion"
+              type="text"
+              name="institucion"
+              [(ngModel)]="edicion.institucion"
+              maxlength="150"
+              required
+            />
+          </div>
+
+          <div class="edit-field">
+            <label for="editCct">CCT *</label>
+            <input
+              id="editCct"
+              type="text"
+              name="cct"
+              [(ngModel)]="edicion.cct"
+              maxlength="10"
+              required
+            />
+          </div>
+
+          <div class="edit-field">
+            <label for="editResponsable">Responsable *</label>
+            <input
+              id="editResponsable"
+              type="text"
+              name="responsable"
+              [(ngModel)]="edicion.responsable"
+              maxlength="120"
+              required
+            />
+          </div>
+
+          <div class="edit-field">
+            <label for="editTelefono">Teléfono *</label>
+            <input
+              id="editTelefono"
+              type="tel"
+              name="telefono"
+              [(ngModel)]="edicion.telefono"
+              maxlength="10"
+              inputmode="numeric"
+              required
+            />
+          </div>
+
+        </div>
+
+        <h3>Información de la visita</h3>
+
+        <div class="edit-grid">
+
+          <div class="edit-field">
+            <label for="editSala">Sala *</label>
+            <select
+              id="editSala"
+              name="sala"
+              [(ngModel)]="edicion.sala"
+              required
+            >
+              <option
+                *ngFor="let sala of salas"
+                [value]="sala"
+              >
+                {{ sala }}
+              </option>
+            </select>
+          </div>
+
+          <div class="edit-field">
+            <label for="editFecha">Fecha de visita *</label>
+            <input
+              id="editFecha"
+              type="date"
+              name="fecha"
+              [(ngModel)]="edicion.fecha_visita"
+              required
+            />
+          </div>
+
+          <div class="edit-field">
+            <label for="editHorario">Horario *</label>
+            <input
+              id="editHorario"
+              type="time"
+              name="horario"
+              [(ngModel)]="edicion.hora_llegada"
+              required
+            />
+          </div>
+
+          <div class="edit-field">
+            <label for="editEstado">Estado</label>
+            <select
+              id="editEstado"
+              name="estado"
+              [(ngModel)]="edicion.estado"
+            >
+              <option value="Pendiente">Pendiente</option>
+              <option value="Confirmada">Confirmada</option>
+              <option value="Cancelada">Cancelada</option>
+              <option value="Realizada">Realizada</option>
+            </select>
+          </div>
+
+          <div class="edit-field">
+            <label for="editAlumnos">Cantidad de alumnos *</label>
+            <input
+              id="editAlumnos"
+              type="number"
+              name="alumnos"
+              [(ngModel)]="edicion.cantidad_alumnos"
+              min="1"
+              step="1"
+              required
+            />
+          </div>
+
+          <div class="edit-field">
+            <label for="editMaestros">Cantidad de maestros *</label>
+            <input
+              id="editMaestros"
+              type="number"
+              name="maestros"
+              [(ngModel)]="edicion.cantidad_maestros"
+              min="0"
+              step="1"
+              required
+            />
+          </div>
+
+        </div>
+
+        <!-- MENSAJE DE ERROR -->
+        <p
+          class="edit-error"
+          *ngIf="errorEdicion"
+          role="alert"
+        >
+          {{ errorEdicion }}
+        </p>
+
+        <p class="edit-note">
+          Los cambios se guardarán temporalmente en esta sesión
+          de demostración. Todavía no se enviarán a MySQL.
+        </p>
+
+      </div>
+
+      <!-- BOTONES -->
+      <div class="modal-footer edit-footer">
+
+        <button
+          type="button"
+          class="btn-clear"
+          (click)="cerrarEdicion()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="btn-primary"
+        >
+          Guardar cambios
+        </button>
+
+      </div>
+
+    </form>
+
+  </section>
+</div>
+

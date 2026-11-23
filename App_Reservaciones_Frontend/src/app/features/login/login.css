@@ -1,0 +1,298 @@
+
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.login-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+/* PANEL IZQUIERDO */
+
+.login-banner {
+  position: relative;
+  min-height: 100vh;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(8, 24, 48, 0.90),
+      rgba(17, 54, 101, 0.78)
+    ),
+    url('/Museo_Descubre.png') center / cover;
+  color: #ffffff;
+}
+
+.banner-overlay {
+  min-height: 100vh;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.museum-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f47735;
+  color: white;
+  font-size: 24px;
+}
+
+.museum-brand h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.museum-brand p {
+  margin: 3px 0 0;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.banner-content {
+  max-width: 520px;
+}
+
+.banner-content h1 {
+  font-size: clamp(36px, 4vw, 60px);
+  line-height: 1.1;
+  font-weight: 700;
+  margin: 0 0 20px;
+}
+
+.banner-content p {
+  font-size: 16px;
+  line-height: 1.7;
+  color: #dce6f3;
+}
+
+.banner-footer {
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+/* PANEL DERECHO */
+
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  background: #ffffff;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.welcome-label {
+  color: #f47735;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.login-card h1 {
+  color: #102746;
+  font-size: 36px;
+  margin: 12px 0;
+}
+
+.login-description {
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+
+/* SELECTOR DE PERFIL */
+
+.profile-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  padding: 5px;
+  margin-bottom: 26px;
+  background: #f1f3f5;
+  border-radius: 9px;
+}
+
+.profile-selector button {
+  border: none;
+  padding: 12px;
+  border-radius: 7px;
+  background: transparent;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-selector button.active {
+  background: #ffffff;
+  color: #102746;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* FORMULARIO */
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #263447;
+}
+
+.form-group input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid #dce1e7;
+  border-radius: 8px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  border-color: #f47735;
+  box-shadow: 0 0 0 3px rgba(244, 119, 53, 0.12);
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-wrapper input {
+  padding-right: 85px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: #173b6c;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.login-error {
+  padding: 12px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+/* BOTÓN PRINCIPAL */
+
+.login-button {
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 8px;
+  background: #f47735;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.login-button:hover:not(:disabled) {
+  background: #df6326;
+  transform: translateY(-1px);
+}
+
+.login-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-help {
+  margin-top: 25px;
+  text-align: center;
+  color: #8b95a3;
+  font-size: 12px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) {
+  .login-container {
+    grid-template-columns: 1fr;
+  }
+
+  .login-banner {
+    min-height: 220px;
+  }
+
+  .banner-overlay {
+    min-height: 220px;
+    padding: 24px;
+  }
+
+  .banner-content h1 {
+    font-size: 27px;
+    margin-bottom: 10px;
+  }
+
+  .banner-content p {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .banner-footer {
+    display: none;
+  }
+
+  .login-panel {
+    padding: 36px 22px;
+  }
+
+  .login-card h1 {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 380px) {
+  .banner-overlay {
+    padding: 18px;
+  }
+
+  .login-panel {
+    padding: 28px 16px;
+  }
+}

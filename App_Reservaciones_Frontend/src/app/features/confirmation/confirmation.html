@@ -1,0 +1,224 @@
+
+<div class="dashboard">
+
+  <!-- MENÚ LATERAL -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+      <div class="logo-icon">✦</div>
+      <div>
+        <h2>Descubre</h2>
+        <span>MUSEO INTERACTIVO</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-menu">
+
+      <a class="menu-item" routerLink="/taquilla">
+        <span class="menu-icon">⌂</span>
+        Inicio
+      </a>
+
+      <a class="menu-item" routerLink="/salas">
+        <span class="menu-icon">▦</span>
+        Salas y horarios
+      </a>
+
+      <a
+        class="menu-item active"
+        routerLink="/reservaciones/nueva">
+        <span class="menu-icon">＋</span>
+        Nueva reservación
+      </a>
+
+      <a class="menu-item" routerLink="/reservaciones">
+        <span class="menu-icon">☷</span>
+        Reservaciones
+      </a>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+      <a class="logout-link" routerLink="/login">
+        ↪ Cerrar sesión
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+
+      <div class="breadcrumbs">
+        Museo Descubre
+        <span>›</span>
+        Reservaciones
+        <span>›</span>
+        <strong>Confirmación</strong>
+      </div>
+
+      <div class="topbar-actions">
+
+        <div class="user-avatar">MT</div>
+
+        <div class="user-info">
+          <strong>Mariana Torres</strong>
+          <span>Taquilla</span>
+        </div>
+
+      </div>
+
+    </header>
+
+    <!-- CONFIRMACIÓN -->
+    <div class="confirmation-content">
+
+      <div class="confirmation-card">
+
+        <!-- ICONO -->
+        <div class="success-icon">
+          ✓
+        </div>
+
+        <p class="section-label">
+          VISTA DE DEMOSTRACIÓN
+        </p>
+
+        <h1>Vista previa de reservación</h1>
+
+        <p class="confirmation-description">
+          Esta pantalla muestra cómo se verá la confirmación
+          cuando conectemos el sistema con la base de datos.
+        </p>
+
+        <!-- FOLIO -->
+        <div class="folio-box">
+          <span>Folio de ejemplo</span>
+          <strong>{{ folio }}</strong>
+        </div>
+
+        <!-- DETALLES -->
+        <div class="details-section">
+
+          <h2>Detalles de la reservación</h2>
+
+          <div class="details-grid">
+
+            <!-- INSTITUCIÓN -->
+            <div class="detail-item">
+              <span>Institución</span>
+              <strong>{{ institucion }}</strong>
+            </div>
+
+            <!-- CCT -->
+            <div class="detail-item">
+              <span>CCT de la institución</span>
+              <strong>{{ cct || 'No disponible' }}</strong>
+            </div>
+
+            <!-- RESPONSABLE -->
+            <div class="detail-item">
+              <span>Persona responsable</span>
+              <strong>{{ responsable }}</strong>
+            </div>
+
+            <!-- TELÉFONO -->
+            <div class="detail-item">
+              <span>Teléfono de contacto</span>
+              <strong>{{ telefono || 'No disponible' }}</strong>
+            </div>
+
+            <!-- TIPO DE VISITA -->
+            <div class="detail-item">
+              <span>Tipo de visita</span>
+              <strong>{{ tipoVisita || 'No disponible' }}</strong>
+            </div>
+
+            <!-- SALA -->
+            <div class="detail-item">
+              <span>Sala</span>
+              <strong>{{ sala }}</strong>
+            </div>
+
+            <!-- FECHA -->
+            <div class="detail-item">
+              <span>Fecha</span>
+              <strong>{{ fecha }}</strong>
+            </div>
+
+            <!-- HORARIO -->
+            <div class="detail-item">
+              <span>Horario</span>
+              <strong>{{ horario }} h</strong>
+            </div>
+
+            <!-- ESTUDIANTES -->
+            <div class="detail-item">
+              <span>Número de estudiantes</span>
+              <strong>{{ estudiantes }}</strong>
+            </div>
+
+            <!-- ADULTOS -->
+            <div class="detail-item">
+              <span>Número de adultos</span>
+              <strong>{{ adultos }}</strong>
+            </div>
+
+            <!-- TOTAL DE ASISTENTES -->
+            <div class="detail-item">
+              <span>Total de asistentes</span>
+              <strong>{{ totalAsistentes }} personas</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- COSTO -->
+        <div class="total-section">
+
+          <div>
+            <span>Importe total de ejemplo</span>
+
+            <strong>
+              {{ total | currency:'MXN':'symbol':'1.0-0' }}
+            </strong>
+          </div>
+
+          <small>MXN</small>
+
+        </div>
+
+        <!-- AVISO -->
+        <div class="demo-notice">
+          Esta es una demostración visual.
+          No se ha registrado ninguna reservación.
+        </div>
+
+        <!-- BOTONES -->
+        <div class="confirmation-actions">
+
+          <a
+            class="primary-button"
+            routerLink="/taquilla">
+            Volver al inicio
+          </a>
+
+          <a
+            class="secondary-button"
+            routerLink="/reservaciones/nueva">
+            Nueva reservación
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>

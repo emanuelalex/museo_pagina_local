@@ -1,0 +1,229 @@
+
+<div class="dashboard">
+
+  <!-- MENÚ LATERAL -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+      <div class="logo-icon">✦</div>
+      <div>
+        <h2>Descubre</h2>
+        <span>MUSEO INTERACTIVO</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-menu">
+      <a class="menu-item active" routerLink="/taquilla">
+        <span class="menu-icon">⌂</span>
+        Inicio
+      </a>
+
+      <a class="menu-item" routerLink="/salas">
+        <span class="menu-icon">▦</span>
+        Salas y horarios
+      </a>
+
+      <a class="menu-item" routerLink="/reservaciones/nueva">
+        <span class="menu-icon">＋</span>
+        Nueva reservación
+      </a>
+
+      <a class="menu-item" routerLink="/reservaciones">
+        <span class="menu-icon">☷</span>
+        Reservaciones
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="help-card">
+        <span class="help-icon">?</span>
+        <strong>¿Necesitas ayuda?</strong>
+        <p>Consulta la guía del sistema</p>
+        <a href="javascript:void(0)">Ver guía ›</a>
+      </div>
+
+      <a class="logout-link" routerLink="/login">
+        ↪ Cerrar sesión
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+      <div class="breadcrumbs">
+        Museo Descubre <span>›</span> <strong>Inicio</strong>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="notification-button" type="button">
+          ♧
+        </button>
+
+        <div class="user-avatar">MT</div>
+
+        <div class="user-info">
+          <strong>Mariana Torres</strong>
+          <span>{{ rolUsuario }}</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="dashboard-content">
+
+      <!-- BIENVENIDA -->
+      <section class="welcome-section">
+        <div>
+          <p class="date-label">PANEL DE TAQUILLA</p>
+          <h1>¡Hola, {{ nombreUsuario }}!</h1>
+          <p class="welcome-description">
+            Aquí tienes el resumen de la actividad en el museo.
+          </p>
+        </div>
+
+        <a class="new-reservation-btn"
+           routerLink="/reservaciones/nueva">
+          ＋ Nueva reservación
+        </a>
+      </section>
+
+      <!-- TARJETAS DE ESTADÍSTICAS -->
+      <section class="stats-grid">
+
+        <div class="stat-card">
+          <div class="stat-icon orange">▦</div>
+          <div class="stat-details">
+            <span>Reservaciones hoy</span>
+            <h2>{{ reservacionesHoy }}</h2>
+            <small>3 por confirmar</small>
+          </div>
+          <span class="stat-arrow">›</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon blue">♙</div>
+          <div class="stat-details">
+            <span>Visitantes esperados</span>
+            <h2>{{ visitantesEsperados }}</h2>
+            <small>Estudiantes y adultos</small>
+          </div>
+          <span class="stat-arrow">›</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon cyan">▤</div>
+          <div class="stat-details">
+            <span>Salas disponibles</span>
+            <h2>{{ salasDisponibles }}/{{ totalSalas }}</h2>
+            <small>En este momento</small>
+          </div>
+          <span class="stat-arrow">›</span>
+        </div>
+
+      </section>
+
+      <!-- INFORMACIÓN INFERIOR -->
+      <section class="dashboard-grid">
+
+        <!-- RESERVACIONES -->
+        <div class="panel reservations-panel">
+
+          <div class="panel-header">
+            <div>
+              <h3>Reservaciones de hoy</h3>
+              <p>Próximas visitas programadas</p>
+            </div>
+
+            <a routerLink="/reservaciones">Ver todas ›</a>
+          </div>
+
+          <div class="reservation-list">
+
+            <div class="reservation-item"
+                 *ngFor="let reserva of reservaciones">
+
+              <div class="reservation-time">
+                {{ reserva.hora }}
+              </div>
+
+              <div class="reservation-info">
+                <strong>{{ reserva.escuela }}</strong>
+                <p>
+                  {{ reserva.sala }} ·
+                  {{ reserva.personas }} personas
+                </p>
+              </div>
+
+              <span
+                class="status-badge"
+                [class.confirmed]="reserva.estado === 'Confirmada'"
+                [class.pending]="reserva.estado === 'Pendiente'">
+                {{ reserva.estado }}
+              </span>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- DISPONIBILIDAD -->
+        <div class="panel availability-panel">
+
+          <div class="panel-header">
+            <div>
+              <h3>Disponibilidad</h3>
+              <p>Ahora, 10–24 h</p>
+            </div>
+
+            <a routerLink="/salas">Ver horarios</a>
+          </div>
+
+          <div class="availability-content">
+
+            <div class="donut-chart">
+              <div class="donut-center">
+                <strong>{{ salasDisponibles }}</strong>
+                <span>de {{ totalSalas }} salas</span>
+              </div>
+            </div>
+
+            <div class="chart-legend">
+              <div>
+                <span class="legend-dot available"></span>
+                Disponibles <strong>6</strong>
+              </div>
+
+              <div>
+                <span class="legend-dot reserved"></span>
+                Reservadas <strong>1</strong>
+              </div>
+
+              <div>
+                <span class="legend-dot blocked"></span>
+                Bloqueadas <strong>1</strong>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="next-slot">
+            <span class="slot-icon">◷</span>
+            <div>
+              <small>Próximo horario disponible</small>
+              <strong>Sala del Universo · 13:00 h</strong>
+            </div>
+            <span>›</span>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+</div>
+

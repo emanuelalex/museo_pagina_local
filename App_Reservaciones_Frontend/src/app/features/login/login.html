@@ -1,0 +1,135 @@
+
+<div class="login-container">
+
+  <!-- Panel izquierdo -->
+  <section class="login-banner">
+    <div class="banner-overlay">
+      <div class="museum-brand">
+        <span class="brand-icon">✦</span>
+        <div>
+          <h2>Descubre</h2>
+          <p>Museo Interactivo</p>
+        </div>
+      </div>
+
+      <div class="banner-content">
+        <h1>La ciencia comienza con una visita.</h1>
+        <p>
+          Organiza y administra las experiencias
+          de los visitantes del Museo Descubre.
+        </p>
+      </div>
+
+      <p class="banner-footer">
+        Aguascalientes, México
+      </p>
+    </div>
+  </section>
+
+  <!-- Panel derecho -->
+  <section class="login-panel">
+    <div class="login-card">
+
+      <span class="welcome-label">BIENVENIDO</span>
+
+      <h1>Inicia sesión</h1>
+
+      <p class="login-description">
+        Ingresa tus datos para acceder al sistema.
+      </p>
+
+      <!-- Selección de perfil -->
+      <div class="profile-selector">
+        <button
+          type="button"
+          [class.active]="perfilSeleccionado === 'taquilla'"
+          (click)="seleccionarPerfil('taquilla')">
+          Taquilla
+        </button>
+
+        <button
+          type="button"
+          [class.active]="perfilSeleccionado === 'admin'"
+          (click)="seleccionarPerfil('admin')">
+          Administración
+        </button>
+      </div>
+
+      <!-- Formulario -->
+      <form
+        [formGroup]="loginForm"
+        (ngSubmit)="iniciarSesion()">
+
+        <div class="form-group">
+          <label for="usuario">Usuario</label>
+
+          <input
+            id="usuario"
+            type="text"
+            formControlName="usuario"
+            placeholder="Ingresa tu usuario"
+            autocomplete="username">
+
+          <small
+            class="field-error"
+            *ngIf="loginForm.controls.usuario.touched &&
+                   loginForm.controls.usuario.invalid">
+            El usuario es obligatorio.
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+
+          <div class="password-wrapper">
+            <input
+              id="password"
+              [type]="mostrarPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="Ingresa tu contraseña"
+              autocomplete="current-password">
+
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="alternarPassword()">
+              {{ mostrarPassword ? 'Ocultar' : 'Mostrar' }}
+            </button>
+          </div>
+
+          <small
+            class="field-error"
+            *ngIf="loginForm.controls.password.touched &&
+                   loginForm.controls.password.invalid">
+            La contraseña es obligatoria.
+          </small>
+        </div>
+
+        <!-- Error del servidor -->
+        <div
+          class="login-error"
+          role="alert"
+          *ngIf="errorMensaje">
+          {{ errorMensaje }}
+        </div>
+
+        <button
+          type="submit"
+          class="login-button"
+          [disabled]="cargando">
+
+          {{ cargando ? 'Ingresando...' : 'Ingresar al sistema →' }}
+        </button>
+
+      </form>
+
+      <p class="login-help">
+        ¿Problemas para acceder?
+        Contacta al administrador.
+      </p>
+
+    </div>
+  </section>
+
+</div>
+

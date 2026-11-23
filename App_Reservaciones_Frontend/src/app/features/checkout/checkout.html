@@ -1,0 +1,477 @@
+
+<div class="dashboard">
+
+  <!-- MENÚ LATERAL -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+      <div class="logo-icon">✦</div>
+      <div>
+        <h2>Descubre</h2>
+        <span>MUSEO INTERACTIVO</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-menu">
+      <a class="menu-item" routerLink="/taquilla">
+        <span class="menu-icon">⌂</span>
+        Inicio
+      </a>
+
+      <a class="menu-item" routerLink="/salas">
+        <span class="menu-icon">▦</span>
+        Salas y horarios
+      </a>
+
+      <a class="menu-item active" routerLink="/reservaciones/nueva">
+        <span class="menu-icon">＋</span>
+        Nueva reservación
+      </a>
+
+      <a class="menu-item" routerLink="/reservaciones">
+        <span class="menu-icon">☷</span>
+        Reservaciones
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="help-card">
+        <span class="help-icon">?</span>
+        <strong>¿Necesitas ayuda?</strong>
+        <p>Consulta la guía del sistema</p>
+        <span>Ver guía ›</span>
+      </div>
+
+      <a class="logout-link" routerLink="/login">
+        ↪ Cerrar sesión
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- BARRA SUPERIOR -->
+    <header class="topbar">
+
+      <div class="breadcrumbs">
+        Museo Descubre <span>›</span>
+        <strong>Nueva reservación</strong>
+      </div>
+
+      <div class="topbar-actions">
+        <span class="notification-icon">♧</span>
+        <div class="user-avatar">MT</div>
+
+        <div class="user-info">
+          <strong>Mariana Torres</strong>
+          <span>Taquilla</span>
+        </div>
+      </div>
+
+    </header>
+
+    <div class="checkout-content">
+
+      <!-- TÍTULO -->
+      <section class="page-heading">
+        <p class="section-label">RESERVACIONES</p>
+        <h1>Nueva reservación</h1>
+        <p>
+          Completa la información de la visita.
+          Los campos con * son obligatorios.
+        </p>
+      </section>
+
+      <div class="checkout-grid">
+
+        <!-- FORMULARIO -->
+        <div class="form-column">
+
+          <!-- SECCIÓN 1: VISITA Y HORARIO -->
+          <section class="form-card">
+
+            <div class="card-heading">
+              <span class="step-number">1</span>
+              <div>
+                <h2>Visita y horario</h2>
+                <p>Selecciona el espacio y momento de la visita.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+
+              <div class="form-field">
+                <label for="sala">Sala *</label>
+
+                <select
+                  id="sala"
+                  name="sala"
+                  [(ngModel)]="salaSeleccionada"
+                  required>
+
+                  <option
+                    *ngFor="let sala of salas"
+                    [value]="sala">
+                    {{ sala }}
+                  </option>
+
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="fecha">Fecha *</label>
+
+                <input
+                  id="fecha"
+                  type="date"
+                  name="fecha"
+                  [(ngModel)]="fecha"
+                  [min]="fechaMinima"
+                  required>
+
+                <small
+                  class="mensaje-error"
+                  *ngIf="fecha !== '' && fecha < fechaMinima">
+                  No puedes seleccionar una fecha anterior a hoy.
+                </small>
+              </div>
+
+              <div class="form-field">
+                <label for="horario">Horario *</label>
+
+                <select
+                  id="horario"
+                  name="horario"
+                  [(ngModel)]="horario"
+                  required>
+
+                  <option
+                    *ngFor="let hora of horarios"
+                    [value]="hora">
+                    {{ hora }}
+                  </option>
+
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label for="tipoVisita">Tipo de visita</label>
+
+                <select
+                  id="tipoVisita"
+                  name="tipoVisita"
+                  [(ngModel)]="tipoVisita">
+
+                  <option
+                    *ngFor="let tipo of tiposVisita"
+                    [value]="tipo">
+                    {{ tipo }}
+                  </option>
+
+                </select>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- SECCIÓN 2: DATOS DE LA INSTITUCIÓN -->
+          <section class="form-card">
+
+            <div class="card-heading">
+              <span class="step-number">2</span>
+              <div>
+                <h2>Datos de la institución</h2>
+                <p>Información para identificar al grupo.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+
+              <!-- INSTITUCIÓN -->
+              <div class="form-field full-width">
+                <label for="institucion">Institución *</label>
+
+                <input
+                  id="institucion"
+                  type="text"
+                  name="institucion"
+                  [(ngModel)]="institucion"
+                  placeholder="Ej. Primaria Miguel Hidalgo"
+                  required>
+
+                <small
+                  class="mensaje-error"
+                  *ngIf="institucion.trim() === ''">
+                  El nombre de la institución es obligatorio.
+                </small>
+              </div>
+
+              <!-- CCT -->
+              <div class="form-field full-width">
+                <label for="cct">
+                  CCT (Clave de Centro de Trabajo) *
+                </label>
+
+                <input
+                  id="cct"
+                  type="text"
+                  name="cct"
+                  [ngModel]="cct"
+                  (ngModelChange)="cct = $event.toUpperCase()"
+                  placeholder="Ej. 01DPR0001A"
+                  maxlength="10"
+                  minlength="10"
+                  pattern="[0-9]{2}[A-Z]{3}[0-9]{4}[A-Z]"
+                  autocomplete="off"
+                  required>
+
+                <small
+                  *ngIf="cct.trim() === ''"
+                  class="mensaje-error">
+                  El CCT de la institución es obligatorio.
+                </small>
+
+                <small
+                  *ngIf="cct.trim() !== '' && !cctValido"
+                  class="mensaje-error">
+                  Ingresa un CCT válido de 10 caracteres.
+                  Ejemplo: 01DPR0001A.
+                </small>
+
+                <small *ngIf="cctValido" class="mensaje-exito">
+                  CCT con formato correcto.
+                </small>
+              </div>
+
+              <!-- RESPONSABLE -->
+              <div class="form-field">
+                <label for="responsable">
+                  Persona responsable *
+                </label>
+
+                <input
+                  id="responsable"
+                  type="text"
+                  name="responsable"
+                  [(ngModel)]="responsable"
+                  placeholder="Nombre completo"
+                  required>
+
+                <small
+                  class="mensaje-error"
+                  *ngIf="responsable.trim() === ''">
+                  El nombre del responsable es obligatorio.
+                </small>
+              </div>
+
+              <!-- TELÉFONO -->
+              <div class="form-field">
+                <label for="telefono">
+                  Teléfono de contacto *
+                </label>
+
+                <input
+                  id="telefono"
+                  type="tel"
+                  name="telefono"
+                  [(ngModel)]="telefono"
+                  placeholder="4490000000"
+                  maxlength="10"
+                  minlength="10"
+                  inputmode="numeric"
+                  pattern="[0-9]{10}"
+                  required>
+
+                <small
+                  class="mensaje-error"
+                  *ngIf="telefono.trim() === ''">
+                  El teléfono de contacto es obligatorio.
+                </small>
+
+                <small
+                  class="mensaje-error"
+                  *ngIf="telefono.trim() !== '' && !telefonoValido">
+                  Ingresa un número de teléfono válido de 10 dígitos.
+                </small>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- SECCIÓN 3: ASISTENTES -->
+          <section class="form-card">
+
+            <div class="card-heading">
+              <span class="step-number">3</span>
+              <div>
+                <h2>Asistentes</h2>
+                <p>Indica cuántas personas asistirán.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+
+              <!-- ESTUDIANTES -->
+              <div class="form-field">
+                <label for="estudiantes">
+                  Número de estudiantes *
+                </label>
+
+                <input
+                  id="estudiantes"
+                  type="number"
+                  name="estudiantes"
+                  [(ngModel)]="estudiantes"
+                  min="0"
+                  step="1"
+                  required>
+
+                <small>$80 por estudiante</small>
+
+                <small
+                  class="mensaje-error"
+                  *ngIf="estudiantes < 0 || estudiantes % 1 !== 0">
+                  Ingresa una cantidad válida de estudiantes.
+                </small>
+              </div>
+
+              <!-- ADULTOS -->
+              <div class="form-field">
+                <label for="adultos">
+                  Número de adultos *
+                </label>
+
+                <input
+                  id="adultos"
+                  type="number"
+                  name="adultos"
+                  [(ngModel)]="adultos"
+                  min="0"
+                  step="1"
+                  required>
+
+                <small>$100 por adulto</small>
+
+                <small
+                  class="mensaje-error"
+                  *ngIf="adultos < 0 || adultos % 1 !== 0">
+                  Ingresa una cantidad válida de adultos.
+                </small>
+              </div>
+
+              <div class="form-field full-width">
+                <small
+                  class="mensaje-error"
+                  *ngIf="totalAsistentes === 0">
+                  Debes registrar al menos un asistente.
+                </small>
+              </div>
+
+            </div>
+          </section>
+
+        </div>
+
+        <!-- RESUMEN DE RESERVACIÓN -->
+        <aside class="summary-card">
+
+          <h2>Resumen de la reservación</h2>
+
+          <div class="selected-room">
+            <div class="room-icon">▥</div>
+            <div>
+              <small>Sala seleccionada</small>
+              <strong>{{ salaSeleccionada }}</strong>
+            </div>
+          </div>
+
+          <div class="summary-details">
+
+            <div class="summary-row">
+              <span>Fecha</span>
+              <strong>{{ fecha }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Horario</span>
+              <strong>{{ horario }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Institución</span>
+              <strong>{{ institucion || 'Sin capturar' }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>CCT</span>
+              <strong>{{ cct || 'Sin capturar' }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Asistentes</span>
+              <strong>{{ totalAsistentes }} personas</strong>
+            </div>
+
+          </div>
+
+          <div class="price-details">
+
+            <div class="price-row">
+              <span>{{ estudiantes }} estudiantes</span>
+              <span>
+                {{ subtotalEstudiantes | currency:'MXN':'symbol':'1.0-0' }}
+              </span>
+            </div>
+
+            <div class="price-row">
+              <span>{{ adultos }} adultos</span>
+              <span>
+                {{ subtotalAdultos | currency:'MXN':'symbol':'1.0-0' }}
+              </span>
+            </div>
+
+          </div>
+
+          <div class="total-row">
+            <strong>Total</strong>
+
+            <div>
+              <strong>
+                {{ total | currency:'MXN':'symbol':'1.0-0' }}
+              </strong>
+              <small>MXN</small>
+            </div>
+          </div>
+
+          <p class="summary-notice">
+            Completa todos los campos obligatorios
+            para confirmar la reservación.
+          </p>
+
+          <button
+            class="confirm-button"
+            type="button"
+            [disabled]="!formularioValido"
+            (click)="confirmarReservacion()">
+            Confirmar reservación
+          </button>
+
+          <a
+            class="cancel-button"
+            routerLink="/taquilla">
+            Cancelar
+          </a>
+
+          <p class="summary-footer">
+            Esta es una reservación de demostración.
+            Aún no se guarda en la base de datos.
+          </p>
+
+        </aside>
+
+      </div>
+    </div>
+  </main>
+</div>
