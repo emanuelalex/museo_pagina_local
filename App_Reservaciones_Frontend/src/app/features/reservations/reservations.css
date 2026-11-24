@@ -691,3 +691,11 @@
     width: 100%;
   }
 }
+
+.estado-modal { max-width: 460px; }
+.estado-modal .btn-primary:disabled { opacity: .55; cursor: not-allowed; }
+.estado-exito { margin: 0 25px 15px; padding: 12px 15px; border-radius: 9px; background: #e7f7ee; color: #218653; font-size: 13px; }
+
+.btn-eliminar { background: #b42332; color: white; }
+.btn-eliminar:hover:not(:disabled) { background: #921c29; }
+.table-actions { flex-wrap: wrap; }

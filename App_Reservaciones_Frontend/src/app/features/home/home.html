@@ -18,12 +18,12 @@
         Inicio
       </a>
 
-      <a class="menu-item" routerLink="/salas">
+      <a class="menu-item" routerLink="/salas-horarios">
         <span class="menu-icon">▦</span>
         Salas y horarios
       </a>
 
-      <a class="menu-item" routerLink="/reservaciones/nueva">
+      <a *ngIf="esAdmin" class="menu-item" routerLink="/reservaciones/nueva">
         <span class="menu-icon">＋</span>
         Nueva reservación
       </a>
@@ -42,7 +42,7 @@
         <a href="javascript:void(0)">Ver guía ›</a>
       </div>
 
-      <a class="logout-link" routerLink="/login">
+      <a class="logout-link" routerLink="/login" (click)="cerrarSesion()">
         ↪ Cerrar sesión
       </a>
     </div>
@@ -66,7 +66,7 @@
         <div class="user-avatar">MT</div>
 
         <div class="user-info">
-          <strong>Mariana Torres</strong>
+          <strong>{{ nombreUsuario }}</strong>
           <span>{{ rolUsuario }}</span>
         </div>
       </div>
@@ -77,14 +77,14 @@
       <!-- BIENVENIDA -->
       <section class="welcome-section">
         <div>
-          <p class="date-label">PANEL DE TAQUILLA</p>
+          <p class="date-label">{{ esAdmin ? 'PANEL DE ADMINISTRACIÓN' : 'PANEL DE SUPERVISORES' }}</p>
           <h1>¡Hola, {{ nombreUsuario }}!</h1>
           <p class="welcome-description">
             Aquí tienes el resumen de la actividad en el museo.
           </p>
         </div>
 
-        <a class="new-reservation-btn"
+        <a *ngIf="esAdmin" class="new-reservation-btn"
            routerLink="/reservaciones/nueva">
           ＋ Nueva reservación
         </a>
@@ -98,7 +98,7 @@
           <div class="stat-details">
             <span>Reservaciones hoy</span>
             <h2>{{ reservacionesHoy }}</h2>
-            <small>3 por confirmar</small>
+            <small>Registradas para hoy</small>
           </div>
           <span class="stat-arrow">›</span>
         </div>
@@ -108,7 +108,7 @@
           <div class="stat-details">
             <span>Visitantes esperados</span>
             <h2>{{ visitantesEsperados }}</h2>
-            <small>Estudiantes y adultos</small>
+            <small>Alumnos y maestros</small>
           </div>
           <span class="stat-arrow">›</span>
         </div>
@@ -116,9 +116,9 @@
         <div class="stat-card">
           <div class="stat-icon cyan">▤</div>
           <div class="stat-details">
-            <span>Salas disponibles</span>
+            <span>Salas activas</span>
             <h2>{{ salasDisponibles }}/{{ totalSalas }}</h2>
-            <small>En este momento</small>
+            <small>En el catálogo</small>
           </div>
           <span class="stat-arrow">›</span>
         </div>
@@ -134,20 +134,24 @@
           <div class="panel-header">
             <div>
               <h3>Reservaciones de hoy</h3>
-              <p>Próximas visitas programadas</p>
+              <p>Visitas programadas para hoy</p>
             </div>
 
             <a routerLink="/reservaciones">Ver todas ›</a>
           </div>
 
           <div class="reservation-list">
+            <p class="dashboard-loading" *ngIf="cargando">Cargando reservaciones...</p>
+            <div class="dashboard-error" *ngIf="!cargando && errorMensaje">
+              <p>{{ errorMensaje }}</p>
+              <button type="button" (click)="cargarResumen()">Reintentar</button>
+            </div>
+            <p class="dashboard-empty" *ngIf="!cargando && !errorMensaje && reservacionesHoy === 0">No hay reservaciones programadas para hoy.</p>
 
             <div class="reservation-item"
                  *ngFor="let reserva of reservaciones">
 
-              <div class="reservation-time">
-                {{ reserva.hora }}
-              </div>
+              <div class="reservation-time">{{ reserva.hora }}</div>
 
               <div class="reservation-info">
                 <strong>{{ reserva.escuela }}</strong>
@@ -165,7 +169,7 @@
               </span>
 
             </div>
-
+            <p class="dashboard-more" *ngIf="!cargando && !errorMensaje && reservacionesHoy > reservaciones.length">Mostrando {{ reservaciones.length }} de {{ reservacionesHoy }} reservaciones de hoy.</p>
           </div>
         </div>
 
@@ -174,49 +178,21 @@
 
           <div class="panel-header">
             <div>
-              <h3>Disponibilidad</h3>
-              <p>Ahora, 10–24 h</p>
+              <h3>Salas</h3>
+              <p>Salas y costos de boleto</p>
             </div>
 
-            <a routerLink="/salas">Ver horarios</a>
+            <a routerLink="/salas-horarios">Ver horarios</a>
           </div>
 
-          <div class="availability-content">
-
-            <div class="donut-chart">
-              <div class="donut-center">
-                <strong>{{ salasDisponibles }}</strong>
-                <span>de {{ totalSalas }} salas</span>
-              </div>
-            </div>
-
-            <div class="chart-legend">
-              <div>
-                <span class="legend-dot available"></span>
-                Disponibles <strong>6</strong>
-              </div>
-
-              <div>
-                <span class="legend-dot reserved"></span>
-                Reservadas <strong>1</strong>
-              </div>
-
-              <div>
-                <span class="legend-dot blocked"></span>
-                Bloqueadas <strong>1</strong>
-              </div>
-            </div>
-
-          </div>
-
-          <div class="next-slot">
+          <a class="next-slot" routerLink="/salas-horarios" aria-label="Consultar salas y horarios">
             <span class="slot-icon">◷</span>
             <div>
-              <small>Próximo horario disponible</small>
-              <strong>Sala del Universo · 13:00 h</strong>
+              <small>Nota</small>
+              <strong>{{ esAdmin ? 'Selecciona una sala y horario al registrar una cita' : 'Consulta los horarios y costos del museo' }}</strong>
             </div>
             <span>›</span>
-          </div>
+          </a>
 
         </div>
 

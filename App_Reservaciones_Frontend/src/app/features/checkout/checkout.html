@@ -1,9 +1,6 @@
 
 <div class="dashboard">
-
-  <!-- MENÚ LATERAL -->
   <aside class="sidebar">
-
     <div class="sidebar-logo">
       <div class="logo-icon">✦</div>
       <div>
@@ -14,23 +11,17 @@
 
     <nav class="sidebar-menu">
       <a class="menu-item" routerLink="/taquilla">
-        <span class="menu-icon">⌂</span>
-        Inicio
+        <span class="menu-icon">⌂</span>Inicio
       </a>
 
-      <a class="menu-item" routerLink="/salas">
-        <span class="menu-icon">▦</span>
-        Salas y horarios
+      <a class="menu-item" routerLink="/salas-horarios">
+        <span class="menu-icon">▦</span>Salas y horarios
       </a>
-
       <a class="menu-item active" routerLink="/reservaciones/nueva">
-        <span class="menu-icon">＋</span>
-        Nueva reservación
+        <span class="menu-icon">＋</span>Nueva reservación
       </a>
-
       <a class="menu-item" routerLink="/reservaciones">
-        <span class="menu-icon">☷</span>
-        Reservaciones
+        <span class="menu-icon">☷</span>Reservaciones
       </a>
     </nav>
 
@@ -42,19 +33,14 @@
         <span>Ver guía ›</span>
       </div>
 
-      <a class="logout-link" routerLink="/login">
+      <a class="logout-link" routerLink="/login" (click)="cerrarSesion()">
         ↪ Cerrar sesión
       </a>
     </div>
-
   </aside>
 
-  <!-- CONTENIDO PRINCIPAL -->
   <main class="main-content">
-
-    <!-- BARRA SUPERIOR -->
     <header class="topbar">
-
       <div class="breadcrumbs">
         Museo Descubre <span>›</span>
         <strong>Nueva reservación</strong>
@@ -62,66 +48,110 @@
 
       <div class="topbar-actions">
         <span class="notification-icon">♧</span>
-        <div class="user-avatar">MT</div>
-
+        <div class="user-avatar">AD</div>
         <div class="user-info">
-          <strong>Mariana Torres</strong>
-          <span>Taquilla</span>
+          <strong>Administración</strong>
+          <span>Gestión de visitas</span>
         </div>
       </div>
-
     </header>
 
     <div class="checkout-content">
 
-      <!-- TÍTULO -->
       <section class="page-heading">
         <p class="section-label">RESERVACIONES</p>
         <h1>Nueva reservación</h1>
-        <p>
-          Completa la información de la visita.
-          Los campos con * son obligatorios.
-        </p>
+        <p>Completa la información de la visita. Los campos con * son obligatorios.</p>
       </section>
 
-      <div class="checkout-grid">
+      <!-- ESTADO DE CARGA -->
+      <div
+        *ngIf="cargandoCatalogos && !errorMensaje"
+        role="status"
+        aria-live="polite"
+      >
+        <p>
+          Cargando escuelas, responsables, salas y horarios...
+        </p>
+      </div>
 
-        <!-- FORMULARIO -->
+      <!-- AVISO DE CATALOGOS: permite usar los datos que sí cargaron -->
+      <div *ngIf="errorMensaje && !cargandoCatalogos" role="alert" aria-live="assertive">
+        <p class="mensaje-error">{{ errorMensaje }}</p>
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="cargarCatalogos()"
+          [disabled]="cargandoCatalogos"
+        >
+          {{ cargandoCatalogos ? 'Intentando...' : 'Reintentar carga' }}
+        </button>
+      </div>
+
+
+      <!-- FORMULARIO -->
+      <div
+        class="checkout-grid"
+        *ngIf="!cargandoCatalogos"
+      >
+
         <div class="form-column">
 
-          <!-- SECCIÓN 1: VISITA Y HORARIO -->
+          <!-- VISITA Y HORARIO -->
           <section class="form-card">
 
             <div class="card-heading">
               <span class="step-number">1</span>
               <div>
                 <h2>Visita y horario</h2>
-                <p>Selecciona el espacio y momento de la visita.</p>
+                <p>Selecciona la escuela, sala y horario de la visita.</p>
               </div>
             </div>
 
             <div class="form-grid">
 
-              <div class="form-field">
-                <label for="sala">Sala *</label>
+              <div class="form-field full-width">
+                <label for="escuela">Escuela *</label>
+                <div class="school-select-row">
+                  <select id="escuela" name="escuela" [(ngModel)]="idEscuela" (ngModelChange)="cambiarEscuela()" required>
+                    <option [ngValue]="0">Selecciona una escuela</option>
+                    <option *ngFor="let escuela of escuelas" [ngValue]="escuela.id_escuela">{{ escuela.nombre }}</option>
+                  </select>
+                  <button type="button" class="btn-add-school" (click)="abrirModalEscuela()">+ Nueva escuela</button>
+                </div>
+                <small *ngIf="escuelas.length === 0">No hay escuelas registradas. Puedes agregar una nueva.</small>
+              </div>
+
+              <div class="form-field full-width">
+                <label for="responsable">Responsable *</label>
 
                 <select
-                  id="sala"
-                  name="sala"
-                  [(ngModel)]="salaSeleccionada"
-                  required>
-
-                  <option
-                    *ngFor="let sala of salas"
-                    [value]="sala">
-                    {{ sala }}
+                  id="responsable"
+                  name="responsable"
+                  [(ngModel)]="idResponsable"
+                  required
+                  [disabled]="!idEscuela"
+                >
+                  <option [ngValue]="0">
+                    Selecciona un responsable
                   </option>
 
+                  <option
+                    *ngFor="let responsable of responsablesEscuela"
+                    [ngValue]="responsable.id_responsable"
+                  >
+                    {{ responsable.nombre }}
+                    {{ responsable.apellido }}
+                  </option>
                 </select>
+
+                <small *ngIf="idEscuela && responsablesEscuela.length === 0">
+                  Esta escuela no tiene responsables registrados.
+                </small>
               </div>
 
               <div class="form-field">
-                <label for="fecha">Fecha *</label>
+                <label for="fecha">Fecha de visita *</label>
 
                 <input
                   id="fecha"
@@ -129,194 +159,69 @@
                   name="fecha"
                   [(ngModel)]="fecha"
                   [min]="fechaMinima"
-                  required>
-
-                <small
-                  class="mensaje-error"
-                  *ngIf="fecha !== '' && fecha < fechaMinima">
-                  No puedes seleccionar una fecha anterior a hoy.
-                </small>
+                  required
+                >
               </div>
 
               <div class="form-field">
-                <label for="horario">Horario *</label>
+                <label for="horaLlegada">Hora de llegada</label>
 
-                <select
-                  id="horario"
-                  name="horario"
-                  [(ngModel)]="horario"
-                  required>
-
-                  <option
-                    *ngFor="let hora of horarios"
-                    [value]="hora">
-                    {{ hora }}
-                  </option>
-
-                </select>
+                <input
+                  id="horaLlegada"
+                  type="time"
+                  name="horaLlegada"
+                  [(ngModel)]="horaLlegada"
+                >
               </div>
 
-              <div class="form-field">
-                <label for="tipoVisita">Tipo de visita</label>
-
-                <select
-                  id="tipoVisita"
-                  name="tipoVisita"
-                  [(ngModel)]="tipoVisita">
-
-                  <option
-                    *ngFor="let tipo of tiposVisita"
-                    [value]="tipo">
-                    {{ tipo }}
-                  </option>
-
+              <div class="form-field full-width">
+                <label for="tipoRecorrido">Tipo de recorrido *</label>
+                <select id="tipoRecorrido" name="tipoRecorrido" [(ngModel)]="tipoRecorrido" (ngModelChange)="cambiarRecorrido()">
+                  <option>Recorrido completo</option><option>Solo salas</option><option>Solo proyecciones</option>
                 </select>
+                <small *ngIf="tipoRecorrido === 'Recorrido completo'">Selecciona Recorrido completo como único espacio y el horario de visita.</small>
               </div>
+              <ng-container>
+              <div class="form-field full-width recorrido-asignacion" *ngFor="let a of asignaciones; let i = index">
+                <label [attr.for]="'sala-' + i">Espacio {{ i + 1 }} *</label>
+                <select [id]="'sala-' + i" [name]="'sala-' + i" [(ngModel)]="a.id_sala" required>
+                  <option [ngValue]="0">Selecciona un espacio</option>
+                  <option *ngFor="let sala of opcionesSala(i)" [ngValue]="sala.id_sala">{{ sala.nombre }} · Capacidad: {{ sala.capacidad }}</option>
+                </select>
+                <label [attr.for]="'horario-' + i">Horario *</label>
+                <select [id]="'horario-' + i" [name]="'horario-' + i" [(ngModel)]="a.id_horario" required>
+                  <option [ngValue]="0">Selecciona un horario</option>
+                  <option *ngFor="let h of horarios" [ngValue]="h.id_horario">{{ h.hora_inicio | slice:0:5 }} - {{ h.hora_fin | slice:0:5 }}</option>
+                </select>
+                <button type="button" class="recorrido-btn" *ngIf="asignaciones.length > 1" (click)="quitarSala(i)">Quitar espacio</button>
+              </div>
+              <div class="form-field full-width">
+                <button type="button" class="recorrido-btn" *ngIf="!recorridoCompleto" (click)="agregarSala()" [disabled]="asignaciones.length >= salasDisponibles.length">+ Agregar otro espacio</button>
+                <small *ngIf="!salasDisponibles.length">No hay espacios activos para este recorrido. Si elegiste Recorrido completo, verifica que exista esa sala activa en el catálogo.</small>
+                <small *ngIf="!horarios.length">No hay horarios activos disponibles.</small>
+                <small *ngIf="!asignacionesValidas">Completa los espacios y horarios requeridos sin repetir salas ni traslapar sesiones.</small>
+              </div>
+              </ng-container>
 
             </div>
           </section>
 
-          <!-- SECCIÓN 2: DATOS DE LA INSTITUCIÓN -->
+          <!-- ASISTENTES -->
           <section class="form-card">
 
             <div class="card-heading">
               <span class="step-number">2</span>
               <div>
-                <h2>Datos de la institución</h2>
-                <p>Información para identificar al grupo.</p>
-              </div>
-            </div>
-
-            <div class="form-grid">
-
-              <!-- INSTITUCIÓN -->
-              <div class="form-field full-width">
-                <label for="institucion">Institución *</label>
-
-                <input
-                  id="institucion"
-                  type="text"
-                  name="institucion"
-                  [(ngModel)]="institucion"
-                  placeholder="Ej. Primaria Miguel Hidalgo"
-                  required>
-
-                <small
-                  class="mensaje-error"
-                  *ngIf="institucion.trim() === ''">
-                  El nombre de la institución es obligatorio.
-                </small>
-              </div>
-
-              <!-- CCT -->
-              <div class="form-field full-width">
-                <label for="cct">
-                  CCT (Clave de Centro de Trabajo) *
-                </label>
-
-                <input
-                  id="cct"
-                  type="text"
-                  name="cct"
-                  [ngModel]="cct"
-                  (ngModelChange)="cct = $event.toUpperCase()"
-                  placeholder="Ej. 01DPR0001A"
-                  maxlength="10"
-                  minlength="10"
-                  pattern="[0-9]{2}[A-Z]{3}[0-9]{4}[A-Z]"
-                  autocomplete="off"
-                  required>
-
-                <small
-                  *ngIf="cct.trim() === ''"
-                  class="mensaje-error">
-                  El CCT de la institución es obligatorio.
-                </small>
-
-                <small
-                  *ngIf="cct.trim() !== '' && !cctValido"
-                  class="mensaje-error">
-                  Ingresa un CCT válido de 10 caracteres.
-                  Ejemplo: 01DPR0001A.
-                </small>
-
-                <small *ngIf="cctValido" class="mensaje-exito">
-                  CCT con formato correcto.
-                </small>
-              </div>
-
-              <!-- RESPONSABLE -->
-              <div class="form-field">
-                <label for="responsable">
-                  Persona responsable *
-                </label>
-
-                <input
-                  id="responsable"
-                  type="text"
-                  name="responsable"
-                  [(ngModel)]="responsable"
-                  placeholder="Nombre completo"
-                  required>
-
-                <small
-                  class="mensaje-error"
-                  *ngIf="responsable.trim() === ''">
-                  El nombre del responsable es obligatorio.
-                </small>
-              </div>
-
-              <!-- TELÉFONO -->
-              <div class="form-field">
-                <label for="telefono">
-                  Teléfono de contacto *
-                </label>
-
-                <input
-                  id="telefono"
-                  type="tel"
-                  name="telefono"
-                  [(ngModel)]="telefono"
-                  placeholder="4490000000"
-                  maxlength="10"
-                  minlength="10"
-                  inputmode="numeric"
-                  pattern="[0-9]{10}"
-                  required>
-
-                <small
-                  class="mensaje-error"
-                  *ngIf="telefono.trim() === ''">
-                  El teléfono de contacto es obligatorio.
-                </small>
-
-                <small
-                  class="mensaje-error"
-                  *ngIf="telefono.trim() !== '' && !telefonoValido">
-                  Ingresa un número de teléfono válido de 10 dígitos.
-                </small>
-              </div>
-
-            </div>
-          </section>
-
-          <!-- SECCIÓN 3: ASISTENTES -->
-          <section class="form-card">
-
-            <div class="card-heading">
-              <span class="step-number">3</span>
-              <div>
                 <h2>Asistentes</h2>
-                <p>Indica cuántas personas asistirán.</p>
+                <p>Indica la cantidad de alumnos y maestros que asistirán.</p>
               </div>
             </div>
 
             <div class="form-grid">
 
-              <!-- ESTUDIANTES -->
               <div class="form-field">
                 <label for="estudiantes">
-                  Número de estudiantes *
+                  Cantidad de alumnos *
                 </label>
 
                 <input
@@ -324,49 +229,54 @@
                   type="number"
                   name="estudiantes"
                   [(ngModel)]="estudiantes"
-                  min="0"
+                  min="1"
                   step="1"
-                  required>
-
-                <small>$80 por estudiante</small>
-
-                <small
-                  class="mensaje-error"
-                  *ngIf="estudiantes < 0 || estudiantes % 1 !== 0">
-                  Ingresa una cantidad válida de estudiantes.
-                </small>
+                  required
+                >
               </div>
 
-              <!-- ADULTOS -->
               <div class="form-field">
-                <label for="adultos">
-                  Número de adultos *
+                <label for="maestros">
+                  Cantidad de maestros *
                 </label>
 
                 <input
-                  id="adultos"
+                  id="maestros"
                   type="number"
-                  name="adultos"
-                  [(ngModel)]="adultos"
+                  name="maestros"
+                  [(ngModel)]="maestros"
                   min="0"
                   step="1"
-                  required>
+                  required
+                >
+              </div>
 
-                <small>$100 por adulto</small>
+              <div class="form-field full-width">
+                <small>
+                  Asistentes: {{ totalAsistentes }}
+                  <ng-container>· Capacidad mínima de los espacios: {{ capacidadMinima || '—' }}</ng-container>
+                </small>
 
                 <small
                   class="mensaje-error"
-                  *ngIf="adultos < 0 || adultos % 1 !== 0">
-                  Ingresa una cantidad válida de adultos.
+                  *ngIf="capacidadMinima > 0 && totalAsistentes > capacidadMinima"
+                >
+                  La cantidad de asistentes supera la capacidad de la sala.
                 </small>
               </div>
 
               <div class="form-field full-width">
-                <small
-                  class="mensaje-error"
-                  *ngIf="totalAsistentes === 0">
-                  Debes registrar al menos un asistente.
-                </small>
+                <label for="observaciones">
+                  Observaciones
+                </label>
+
+                <textarea
+                  id="observaciones"
+                  name="observaciones"
+                  [(ngModel)]="observaciones"
+                  rows="3"
+                  placeholder="Información adicional sobre la visita"
+                ></textarea>
               </div>
 
             </div>
@@ -374,20 +284,31 @@
 
         </div>
 
-        <!-- RESUMEN DE RESERVACIÓN -->
+        <!-- RESUMEN -->
         <aside class="summary-card">
 
           <h2>Resumen de la reservación</h2>
 
           <div class="selected-room">
             <div class="room-icon">▥</div>
+
             <div>
-              <small>Sala seleccionada</small>
-              <strong>{{ salaSeleccionada }}</strong>
+              <small>Espacios seleccionados</small>
+              <strong>
+                {{ resumenSalas || 'Sin seleccionar' }}
+              </strong>
             </div>
           </div>
 
           <div class="summary-details">
+            <div class="summary-row"><span>Recorrido</span><strong>{{ tipoRecorrido }}</strong></div>
+
+            <div class="summary-row">
+              <span>Escuela</span>
+              <strong>
+                {{ escuelaActual?.nombre || 'Sin seleccionar' }}
+              </strong>
+            </div>
 
             <div class="summary-row">
               <span>Fecha</span>
@@ -396,82 +317,73 @@
 
             <div class="summary-row">
               <span>Horario</span>
-              <strong>{{ horario }}</strong>
+              <strong>
+                {{ resumenHorarios || 'Sin seleccionar' }}
+              </strong>
             </div>
 
             <div class="summary-row">
-              <span>Institución</span>
-              <strong>{{ institucion || 'Sin capturar' }}</strong>
+              <span>Alumnos</span>
+              <strong>{{ estudiantes }}</strong>
             </div>
 
             <div class="summary-row">
-              <span>CCT</span>
-              <strong>{{ cct || 'Sin capturar' }}</strong>
+              <span>Maestros</span>
+              <strong>{{ maestros }}</strong>
             </div>
 
             <div class="summary-row">
-              <span>Asistentes</span>
-              <strong>{{ totalAsistentes }} personas</strong>
+              <span>Total de asistentes</span>
+              <strong>{{ totalAsistentes }}</strong>
             </div>
 
           </div>
 
           <div class="price-details">
-
-            <div class="price-row">
-              <span>{{ estudiantes }} estudiantes</span>
-              <span>
-                {{ subtotalEstudiantes | currency:'MXN':'symbol':'1.0-0' }}
-              </span>
-            </div>
-
-            <div class="price-row">
-              <span>{{ adultos }} adultos</span>
-              <span>
-                {{ subtotalAdultos | currency:'MXN':'symbol':'1.0-0' }}
-              </span>
-            </div>
-
-          </div>
-
-          <div class="total-row">
-            <strong>Total</strong>
-
-            <div>
-              <strong>
-                {{ total | currency:'MXN':'symbol':'1.0-0' }}
-              </strong>
-              <small>MXN</small>
+            <div class="summary-row">
+              <span>Estado inicial</span>
+              <strong>Pendiente</strong>
             </div>
           </div>
-
-          <p class="summary-notice">
-            Completa todos los campos obligatorios
-            para confirmar la reservación.
-          </p>
 
           <button
-            class="confirm-button"
             type="button"
-            [disabled]="!formularioValido"
-            (click)="confirmarReservacion()">
-            Confirmar reservación
+            class="btn-primary"
+            [disabled]="guardando || !formularioValido"
+            (click)="confirmarReservacion()"
+          >
+            {{ guardando ? 'Guardando...' : 'Registrar reservación' }}
           </button>
-
-          <a
-            class="cancel-button"
-            routerLink="/taquilla">
-            Cancelar
-          </a>
-
-          <p class="summary-footer">
-            Esta es una reservación de demostración.
-            Aún no se guarda en la base de datos.
-          </p>
 
         </aside>
 
       </div>
     </div>
-  </main>
+  
+  <!-- MODAL PARA REGISTRAR UNA ESCUELA NUEVA -->
+  <div class="school-modal-backdrop" *ngIf="mostrarModalEscuela" (click)="cerrarModalEscuela()">
+    <section class="school-modal" role="dialog" aria-modal="true" aria-labelledby="school-modal-title" (click)="$event.stopPropagation()">
+      <header class="school-modal-header">
+        <div><span class="section-label">CATÁLOGO</span><h2 id="school-modal-title">Registrar nueva escuela</h2><p>Captura los datos de la institución para agregarla al sistema.</p></div>
+        <button type="button" class="school-modal-close" (click)="cerrarModalEscuela()" [disabled]="guardandoEscuela" aria-label="Cerrar">×</button>
+      </header>
+      <form class="school-modal-form" (ngSubmit)="guardarNuevaEscuela()">
+        <div class="form-field"><label for="nuevaEscuelaNombre">Nombre de la escuela *</label><input id="nuevaEscuelaNombre" name="nuevaEscuelaNombre" [(ngModel)]="nuevaEscuela.nombre" required maxlength="180" placeholder="Nombre de la institución"></div>
+        <div class="form-field"><label for="nuevaEscuelaClave">Clave de escuela</label><input id="nuevaEscuelaClave" name="nuevaEscuelaClave" [(ngModel)]="nuevaEscuela.clave_escuela" maxlength="40" placeholder="Clave oficial (si cuenta con ella)"></div>
+        <div class="form-field"><label for="nuevaEscuelaTipo">Tipo de escuela</label><input id="nuevaEscuelaTipo" name="nuevaEscuelaTipo" [(ngModel)]="nuevaEscuela.tipo_escuela" maxlength="100" placeholder="Primaria, secundaria, etc."></div>
+        <div class="form-field"><label for="nuevaEscuelaTelefono">Teléfono</label><input id="nuevaEscuelaTelefono" name="nuevaEscuelaTelefono" [(ngModel)]="nuevaEscuela.telefono" maxlength="30" placeholder="Teléfono de contacto"></div>
+        <div class="form-field"><label for="nuevaEscuelaCorreo">Correo electrónico</label><input id="nuevaEscuelaCorreo" name="nuevaEscuelaCorreo" [(ngModel)]="nuevaEscuela.correo" type="email" maxlength="150" placeholder="contacto@escuela.edu.mx"></div>
+        <div class="form-field full-width"><label for="nuevaEscuelaDireccion">Dirección</label><input id="nuevaEscuelaDireccion" name="nuevaEscuelaDireccion" [(ngModel)]="nuevaEscuela.direccion" maxlength="250" placeholder="Dirección completa"></div>
+        <div class="school-modal-section-title full-width"><strong>Responsable de la escuela</strong><small>Se registrará junto con la institución para que puedas seleccionarlo en la reservación.</small></div>
+        <div class="form-field"><label for="nuevoResponsableNombre">Nombre(s) *</label><input id="nuevoResponsableNombre" name="nuevoResponsableNombre" [(ngModel)]="nuevoResponsable.nombre" required maxlength="120" placeholder="Nombre del responsable"></div>
+        <div class="form-field"><label for="nuevoResponsableApellido">Apellido(s) *</label><input id="nuevoResponsableApellido" name="nuevoResponsableApellido" [(ngModel)]="nuevoResponsable.apellido" required maxlength="120" placeholder="Apellido del responsable"></div>
+        <div class="form-field"><label for="nuevoResponsableCargo">Cargo</label><input id="nuevoResponsableCargo" name="nuevoResponsableCargo" [(ngModel)]="nuevoResponsable.cargo" maxlength="100" placeholder="Director, docente, etc."></div>
+        <div class="form-field"><label for="nuevoResponsableTelefono">Teléfono del responsable</label><input id="nuevoResponsableTelefono" name="nuevoResponsableTelefono" [(ngModel)]="nuevoResponsable.telefono" maxlength="30" placeholder="Teléfono"></div>
+        <div class="form-field full-width"><label for="nuevoResponsableCorreo">Correo del responsable</label><input id="nuevoResponsableCorreo" name="nuevoResponsableCorreo" [(ngModel)]="nuevoResponsable.correo" type="email" maxlength="150" placeholder="Correo electrónico"></div>
+        <p class="school-modal-error" *ngIf="errorEscuela" role="alert">{{ errorEscuela }}</p>
+        <footer class="school-modal-actions"><button type="button" class="btn-secondary" (click)="cerrarModalEscuela()" [disabled]="guardandoEscuela">Cancelar</button><button type="submit" class="btn-primary" [disabled]="guardandoEscuela || !nuevaEscuela.nombre.trim() || !nuevoResponsable.nombre.trim() || !nuevoResponsable.apellido.trim()">{{ guardandoEscuela ? faseGuardadoEscuela : 'Guardar escuela y responsable' }}</button></footer>
+      </form>
+    </section>
+  </div>
+</main>
 </div>

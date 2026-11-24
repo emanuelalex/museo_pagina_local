@@ -1,27 +1,25 @@
-
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap, timeout, finalize } from 'rxjs/operators';
+import { Cita } from '../../core/models/reserva';
+import { Escuela, Responsable } from '../../core/models/exhibicion';
+import { SalaCita } from '../../core/models/horario';
+import { Museo } from '../../core/services/museo';
+import { Reserva } from '../../core/services/reserva';
+import { AuthService } from '../../core/services/auth';
 
-// =====================================
-// ESTRUCTURA DE UNA RESERVACIÓN
-// =====================================
-
-export interface Reservacion {
-  id_cita: number;
+export interface ReservacionVista extends Cita {
   folio: string;
   institucion: string;
-  cct: string;
+  clave_escuela: string;
   responsable: string;
   telefono: string;
   sala: string;
-  fecha_visita: string;
-  hora_llegada: string;
-  cantidad_alumnos: number;
-  cantidad_maestros: number;
-  total: number;
-  estado: 'Pendiente' | 'Confirmada' | 'Cancelada' | 'Realizada';
+  horarioCompleto: string;
+  salasAsignadas: SalaCita[];
 }
 
 @Component({
@@ -31,325 +29,243 @@ export interface Reservacion {
   templateUrl: './reservations.html',
   styleUrl: './reservations.css'
 })
-export class Reservations {
+export class Reservations implements OnInit {
+  private museo = inject(Museo);
+  private reservaService = inject(Reserva);
+  private platformId = inject(PLATFORM_ID);
+  private auth = inject(AuthService);
+  private router = inject(Router);
 
-  // =====================================
-  // FILTROS
-  // =====================================
-
+  get esAdmin(): boolean { return this.auth.getRol() === 'admin'; }
+  cargando = true;
+  errorMensaje = '';
   busqueda = '';
   filtroFecha = '';
+  filtroAnio = '';
+  meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  get anios(): string[] { return [...new Set(this.reservaciones.map(r => r.fecha_visita.slice(0,4)))].sort().reverse(); }
   filtroSala = '';
   filtroEstado = '';
-
-  // =====================================
-  // PAGINACIÓN
-  // =====================================
-
   paginaActual = 1;
   registrosPorPagina = 5;
+  salas: string[] = [];
+  reservaciones: ReservacionVista[] = [];
+  reservacionSeleccionada: ReservacionVista | null = null;
+  actualizandoEstado = false;
+  private cdr = inject(ChangeDetectorRef);
+  reservacionEditada: ReservacionVista | null = null;
+  estadosEditables = ['Pendiente', 'Confirmada', 'Cancelada'] as const;
+  nuevoEstado: Cita['estado'] = 'Pendiente';
+  errorEdicion = '';
+  mensajeEstado = '';
 
-  // =====================================
-  // CATÁLOGO TEMPORAL DE SALAS
-  // =====================================
+  reservacionAEliminar: ReservacionVista | null = null;
+  eliminando = false;
+  errorEliminacion = '';
 
-  salas = [
-    'Sala de la Tierra',
-    'Sala del Universo',
-    'Sala de Energía',
-    'Domo IMAX',
-    'Sala de la Vida'
-  ];
+  solicitarEliminacion(cita: ReservacionVista): void {
+    if (!this.esAdmin) return;
+    if (this.eliminando || this.actualizandoEstado || this.cargando) return;
+    this.reservacionAEliminar = cita;
+    this.errorEliminacion = '';
+    this.mensajeEstado = '';
+  }
 
-  // =====================================
-  // RESERVACIONES DE DEMOSTRACIÓN
-  // =====================================
+  cerrarEliminacion(): void {
+    if (!this.eliminando) this.reservacionAEliminar = null;
+  }
 
-  reservaciones: Reservacion[] = [
-    {
-      id_cita: 2841,
-      folio: 'R-2841',
-      institucion: 'Primaria Benito Juárez',
-      cct: '01DPR0001A',
-      responsable: 'María González',
-      telefono: '4491234567',
-      sala: 'Sala de la Tierra',
-      fecha_visita: '2026-11-25',
-      hora_llegada: '09:00',
-      cantidad_alumnos: 40,
-      cantidad_maestros: 2,
-      total: 3400,
-      estado: 'Confirmada'
-    },
-    {
-      id_cita: 2840,
-      folio: 'R-2840',
-      institucion: 'Colegio Nuevos Horizontes',
-      cct: '01PPR0002B',
-      responsable: 'Carlos Hernández',
-      telefono: '4492345678',
-      sala: 'Sala del Universo',
-      fecha_visita: '2026-11-25',
-      hora_llegada: '11:00',
-      cantidad_alumnos: 33,
-      cantidad_maestros: 3,
-      total: 2940,
-      estado: 'Confirmada'
-    },
-    {
-      id_cita: 2839,
-      folio: 'R-2839',
-      institucion: 'Secundaria Técnica 1',
-      cct: '01DST0003C',
-      responsable: 'Ana Martínez',
-      telefono: '4493456789',
-      sala: 'Domo IMAX',
-      fecha_visita: '2026-11-26',
-      hora_llegada: '10:00',
-      cantidad_alumnos: 55,
-      cantidad_maestros: 3,
-      total: 4700,
-      estado: 'Pendiente'
-    },
-    {
-      id_cita: 2838,
-      folio: 'R-2838',
-      institucion: 'Instituto Alameda',
-      cct: '01PPR0004D',
-      responsable: 'Jorge Ramírez',
-      telefono: '4494567890',
-      sala: 'Sala de Energía',
-      fecha_visita: '2026-11-27',
-      hora_llegada: '12:30',
-      cantidad_alumnos: 25,
-      cantidad_maestros: 2,
-      total: 2200,
-      estado: 'Confirmada'
-    },
-    {
-      id_cita: 2837,
-      folio: 'R-2837',
-      institucion: 'Primaria Francisco Villa',
-      cct: '01DPR0005E',
-      responsable: 'Laura Sánchez',
-      telefono: '4495678901',
-      sala: 'Sala de la Vida',
-      fecha_visita: '2026-11-27',
-      hora_llegada: '09:30',
-      cantidad_alumnos: 42,
-      cantidad_maestros: 3,
-      total: 3660,
-      estado: 'Cancelada'
-    },
-    {
-      id_cita: 2836,
-      folio: 'R-2836',
-      institucion: 'Primaria Independencia',
-      cct: '01DPR0006F',
-      responsable: 'Pedro López',
-      telefono: '4496789012',
-      sala: 'Sala de la Tierra',
-      fecha_visita: '2026-11-28',
-      hora_llegada: '10:00',
-      cantidad_alumnos: 28,
-      cantidad_maestros: 2,
-      total: 2440,
-      estado: 'Pendiente'
-    }
-  ];
-
-  // =====================================
-  // FILTRAR RESERVACIONES
-  // =====================================
-
-  get reservacionesFiltradas(): Reservacion[] {
-
-    const texto = this.busqueda.trim().toLowerCase();
-
-    return this.reservaciones.filter(reservacion => {
-
-      const coincideBusqueda =
-        reservacion.folio.toLowerCase().includes(texto) ||
-        reservacion.institucion.toLowerCase().includes(texto) ||
-        reservacion.cct.toLowerCase().includes(texto);
-
-      const coincideFecha =
-        !this.filtroFecha ||
-        reservacion.fecha_visita === this.filtroFecha;
-
-      const coincideSala =
-        !this.filtroSala ||
-        reservacion.sala === this.filtroSala;
-
-      const coincideEstado =
-        !this.filtroEstado ||
-        reservacion.estado === this.filtroEstado;
-
-      return (
-        coincideBusqueda &&
-        coincideFecha &&
-        coincideSala &&
-        coincideEstado
-      );
+  confirmarEliminacion(): void {
+    if (!this.esAdmin) return;
+    const cita = this.reservacionAEliminar;
+    if (!cita || this.eliminando || this.actualizandoEstado) return;
+    this.eliminando = true;
+    this.errorEliminacion = '';
+    this.reservaService.eliminarCita(cita.id_cita).pipe(
+      timeout(15000),
+      finalize(() => { this.eliminando = false; this.cdr.markForCheck(); })
+    ).subscribe({
+      next: () => {
+        this.reservaciones = this.reservaciones.filter(r => r.id_cita !== cita.id_cita);
+        this.salas = [...new Set(this.reservaciones.flatMap(r => r.sala === 'Recorrido completo' ? [r.sala] : r.salasAsignadas.map(s => s.sala)))];
+        if (!this.salas.includes(this.filtroSala)) this.filtroSala = '';
+        if (!this.anios.includes(this.filtroAnio)) this.filtroAnio = '';
+        this.paginaActual = Math.min(this.paginaActual, this.totalPaginas);
+        if (this.reservacionSeleccionada?.id_cita === cita.id_cita) this.reservacionSeleccionada = null;
+        this.reservacionAEliminar = null;
+        this.mensajeEstado = `Reservación ${cita.folio} eliminada correctamente.`;
+      },
+      error: error => {
+        this.errorEliminacion = error.error?.mensaje || 'No se pudo confirmar la eliminación. Recarga el listado antes de reintentar.';
+      }
     });
   }
 
-  // =====================================
-  // PAGINACIÓN
-  // =====================================
+  editarReservacion(reservacion: ReservacionVista): void {
+    if (!this.esAdmin) return;
+    if (this.eliminando || this.actualizandoEstado || reservacion.estado === 'Realizada') return;
+    this.reservacionEditada = reservacion;
+    this.nuevoEstado = reservacion.estado;
+    this.errorEdicion = '';
+    this.mensajeEstado = '';
+  }
 
-  get totalPaginas(): number {
-    return Math.max(
-      1,
-      Math.ceil(
-        this.reservacionesFiltradas.length /
-        this.registrosPorPagina
-      )
+  cerrarEdicion(): void {
+    if (!this.actualizandoEstado) this.reservacionEditada = null;
+  }
+
+  guardarEstado(): void {
+    if (!this.esAdmin) return;
+    const cita = this.reservacionEditada;
+    const estado = this.nuevoEstado;
+    if (!cita || this.actualizandoEstado || cita.estado === estado ||
+        cita.estado === 'Realizada' || estado === 'Realizada' ||
+        !this.estadosEditables.includes(estado)) return;
+    this.actualizandoEstado = true;
+    this.errorEdicion = '';
+    this.reservaService.cambiarEstado(cita.id_cita, estado).pipe(
+      timeout(12000),
+      finalize(() => {
+        this.actualizandoEstado = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        cita.estado = estado;
+        if (this.reservacionSeleccionada?.id_cita === cita.id_cita) {
+          this.reservacionSeleccionada = { ...cita };
+        }
+        this.paginaActual = Math.min(this.paginaActual, this.totalPaginas);
+        this.mensajeEstado = `Reservación ${cita.folio}: estado actualizado a ${estado}.`;
+        this.reservacionEditada = null;
+      },
+      error: error => {
+        this.errorEdicion = error.error?.mensaje || (error.name === 'TimeoutError'
+          ? 'El servidor tardó demasiado. Consulta el estado actual antes de reintentar.'
+          : 'No fue posible actualizar el estado.');
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.cargarReservaciones();
+  }
+
+  cerrarSesion(): void {
+    this.auth.logout();
+    this.router.navigate(['/login']);
+  }
+
+  cargarReservaciones(): void {
+    this.cargando = true;
+    this.errorMensaje = '';
+
+    forkJoin({
+      citas: this.reservaService.obtenerCitas(),
+      escuelas: this.museo.obtenerEscuelas(),
+      responsables: this.museo.obtenerResponsables()
+    }).pipe(
+      switchMap(({ citas, escuelas, responsables }) => {
+        const consultas = citas.map(cita =>
+          this.reservaService.obtenerSalasCita(cita.id_cita).pipe(
+            catchError(() => of([] as SalaCita[])),
+            map(asignaciones => {
+              const escuela = escuelas.find(e => e.id_escuela === cita.id_escuela);
+              const responsable = responsables.find(r => r.id_responsable === cita.id_responsable);
+              const completo = /^Tipo de recorrido: Recorrido completo(?:\r?\n|$)/.test(cita.observaciones || '');
+              return {
+                ...cita,
+                folio: `C-${cita.id_cita}`,
+                institucion: escuela?.nombre || 'Escuela no disponible',
+                clave_escuela: escuela?.clave_escuela || '—',
+                responsable: responsable ? `${responsable.nombre} ${responsable.apellido}` : 'Responsable no disponible',
+                telefono: responsable?.telefono || '—',
+                sala: completo ? 'Recorrido completo' : asignaciones.map(a => a.sala).join(', ') || 'Sin sala asignada',
+                horarioCompleto: completo ? 'Sin horario individual' : asignaciones.map(a => `${a.hora_inicio.slice(0, 5)} - ${a.hora_fin.slice(0, 5)}`).join(', '),
+                salasAsignadas: asignaciones
+              } as ReservacionVista;
+            })
+          )
+        );
+        return consultas.length ? forkJoin(consultas) : of([] as ReservacionVista[]);
+      })
+    ).subscribe({
+      next: reservaciones => {
+        this.reservaciones = reservaciones;
+        this.salas = [...new Set(reservaciones.flatMap(r => r.sala === 'Recorrido completo' ? [r.sala] : r.salasAsignadas.map(s => s.sala)))];
+        this.cargando = false;
+      },
+      error: error => {
+        this.cargando = false;
+        this.errorMensaje = error.error?.mensaje || 'No fue posible consultar las reservaciones.';
+      }
+    });
+  }
+
+  get reservacionesFiltradas(): ReservacionVista[] {
+    const texto = this.busqueda.trim().toLowerCase();
+    return this.reservaciones.filter(r =>
+      (!texto || [r.folio, r.institucion, r.clave_escuela, r.responsable, r.registrado_por || ''].some(v => v.toLowerCase().includes(texto))) &&
+      (!this.filtroFecha || r.fecha_visita.slice(5, 7) === this.filtroFecha) &&
+      (!this.filtroAnio || r.fecha_visita.slice(0,4) === this.filtroAnio) &&
+      (!this.filtroSala || (r.sala === this.filtroSala || (r.sala !== 'Recorrido completo' && r.salasAsignadas.some(s => s.sala === this.filtroSala)))) &&
+      (!this.filtroEstado || r.estado === this.filtroEstado)
     );
   }
 
-  get reservacionesPaginadas(): Reservacion[] {
+  get totalPaginas(): number {
+    return Math.max(1, Math.ceil(this.reservacionesFiltradas.length / this.registrosPorPagina));
+  }
 
-    const inicio =
-      (this.paginaActual - 1) * this.registrosPorPagina;
-
-    return this.reservacionesFiltradas.slice(
-      inicio,
-      inicio + this.registrosPorPagina
-    );
+  get reservacionesPaginadas(): ReservacionVista[] {
+    const inicio = (this.paginaActual - 1) * this.registrosPorPagina;
+    return this.reservacionesFiltradas.slice(inicio, inicio + this.registrosPorPagina);
   }
 
   cambiarPagina(pagina: number): void {
-
-    if (pagina >= 1 && pagina <= this.totalPaginas) {
-      this.paginaActual = pagina;
-    }
+    if (pagina >= 1 && pagina <= this.totalPaginas) this.paginaActual = pagina;
   }
 
-  aplicarFiltros(): void {
-    this.paginaActual = 1;
-  }
-
-  // =====================================
-  // LIMPIAR FILTROS
-  // =====================================
+  aplicarFiltros(): void { this.paginaActual = 1; }
 
   limpiarFiltros(): void {
     this.busqueda = '';
     this.filtroFecha = '';
+    this.filtroAnio = '';
     this.filtroSala = '';
     this.filtroEstado = '';
     this.paginaActual = 1;
   }
 
-  // =====================================
-  // CALCULAR TOTAL DE ASISTENTES
-  // =====================================
-
-  obtenerTotalAsistentes(reservacion: Reservacion): number {
-    return (
-      reservacion.cantidad_alumnos +
-      reservacion.cantidad_maestros
-    );
+  obtenerTotalAsistentes(cita: Cita): number {
+    return Number(cita.cantidad_alumnos) + Number(cita.cantidad_maestros);
   }
 
-
-
-  reservacionSeleccionada: Reservacion | null = null;
-
-  verReservacion(reservacion: Reservacion): void {
-    console.log('Botón Ver presionado:', reservacion);
+  verReservacion(reservacion: ReservacionVista): void {
     this.reservacionSeleccionada = reservacion;
   }
 
-  cerrarDetalle(): void {
-    this.reservacionSeleccionada = null;
+  cerrarDetalle(): void { this.reservacionSeleccionada = null; }
+
+  cancelarReservacion(reservacion: ReservacionVista): void {
+    if (!this.esAdmin) return;
+    if (this.eliminando || this.actualizandoEstado || reservacion.estado === 'Cancelada' || reservacion.estado === 'Realizada') return;
+    if (!confirm(`¿Deseas cancelar la reservación ${reservacion.folio}?`)) return;
+
+    this.actualizandoEstado = true;
+    this.reservaService.cambiarEstado(reservacion.id_cita, 'Cancelada').subscribe({
+      next: () => {
+        reservacion.estado = 'Cancelada';
+        this.actualizandoEstado = false;
+        if (this.reservacionSeleccionada?.id_cita === reservacion.id_cita) {
+          this.reservacionSeleccionada = { ...reservacion };
+        }
+      },
+      error: error => {
+        this.actualizandoEstado = false;
+        this.errorMensaje = error.error?.mensaje || 'No fue posible cancelar la reservación.';
+      }
+    });
   }
-
-  // =====================================
-  // EDITAR RESERVACIÓN
-  // =====================================
-
-  reservacionEnEdicion: Reservacion | null = null;
-  errorEdicion = '';
-
-  abrirEdicion(reservacion: Reservacion): void {
-  alert('¡El botón Editar funciona!');
-
-  this.reservacionEnEdicion = { ...reservacion };
-  this.errorEdicion = '';
-}
-
-
-  cerrarEdicion(): void {
-    this.reservacionEnEdicion = null;
-    this.errorEdicion = '';
-  }
-
-  guardarEdicion(): void {
-    const editada = this.reservacionEnEdicion;
-
-    if (!editada) {
-      return;
-    }
-
-    if (!editada.institucion.trim()) {
-      this.errorEdicion = 'La institución es obligatoria.';
-      return;
-    }
-
-    if (!/^[0-9]{2}[A-Z]{3}[0-9]{4}[A-Z]$/.test(
-      editada.cct.trim().toUpperCase()
-    )) {
-      this.errorEdicion = 'El CCT debe tener un formato válido de 10 caracteres.';
-      return;
-    }
-
-    if (!editada.responsable.trim()) {
-      this.errorEdicion = 'El responsable es obligatorio.';
-      return;
-    }
-
-    if (!/^[0-9]{10}$/.test(editada.telefono)) {
-      this.errorEdicion = 'El teléfono debe tener 10 dígitos.';
-      return;
-    }
-
-    if (!editada.sala || !this.salas.includes(editada.sala)) {
-      this.errorEdicion = 'Selecciona una sala válida.';
-      return;
-    }
-
-    if (!editada.fecha_visita || !editada.hora_llegada) {
-      this.errorEdicion = 'La fecha y el horario son obligatorios.';
-      return;
-    }
-
-    if (
-      !Number.isInteger(Number(editada.cantidad_alumnos)) ||
-      Number(editada.cantidad_alumnos) < 1 ||
-      !Number.isInteger(Number(editada.cantidad_maestros)) ||
-      Number(editada.cantidad_maestros) < 0
-    ) {
-      this.errorEdicion = 'Ingresa cantidades válidas de alumnos y maestros.';
-      return;
-    }
-
-    const indice = this.reservaciones.findIndex(
-      r => r.id_cita === editada.id_cita
-    );
-
-    if (indice === -1) {
-      this.errorEdicion = 'No se encontró la reservación.';
-      return;
-    }
-
-    editada.cct = editada.cct.trim().toUpperCase();
-
-    this.reservaciones[indice] = { ...editada };
-    this.reservaciones = [...this.reservaciones];
-
-    this.cerrarEdicion();
-  }
-
 }

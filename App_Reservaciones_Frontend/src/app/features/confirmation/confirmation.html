@@ -19,9 +19,8 @@
         Inicio
       </a>
 
-      <a class="menu-item" routerLink="/salas">
-        <span class="menu-icon">▦</span>
-        Salas y horarios
+      <a class="menu-item" routerLink="/salas-horarios">
+        <span class="menu-icon">▦</span>Salas y horarios
       </a>
 
       <a
@@ -39,7 +38,7 @@
     </nav>
 
     <div class="sidebar-bottom">
-      <a class="logout-link" routerLink="/login">
+      <a class="logout-link" routerLink="/login" (click)="cerrarSesion()">
         ↪ Cerrar sesión
       </a>
     </div>
@@ -65,8 +64,8 @@
         <div class="user-avatar">MT</div>
 
         <div class="user-info">
-          <strong>Mariana Torres</strong>
-          <span>Taquilla</span>
+          <strong>{{ nombreUsuario }}</strong>
+          <span>Administración</span>
         </div>
 
       </div>
@@ -84,19 +83,18 @@
         </div>
 
         <p class="section-label">
-          VISTA DE DEMOSTRACIÓN
+          RESERVACIÓN REGISTRADA
         </p>
 
-        <h1>Vista previa de reservación</h1>
+        <h1>Reservación registrada correctamente</h1>
 
         <p class="confirmation-description">
-          Esta pantalla muestra cómo se verá la confirmación
-          cuando conectemos el sistema con la base de datos.
+          La cita se guardó correctamente en el sistema.
         </p>
 
         <!-- FOLIO -->
         <div class="folio-box">
-          <span>Folio de ejemplo</span>
+          <span>Folio de reservación</span>
           <strong>{{ folio }}</strong>
         </div>
 
@@ -115,7 +113,7 @@
 
             <!-- CCT -->
             <div class="detail-item">
-              <span>CCT de la institución</span>
+              <span>Clave de la escuela</span>
               <strong>{{ cct || 'No disponible' }}</strong>
             </div>
 
@@ -125,16 +123,10 @@
               <strong>{{ responsable }}</strong>
             </div>
 
-            <!-- TELÉFONO -->
-            <div class="detail-item">
-              <span>Teléfono de contacto</span>
-              <strong>{{ telefono || 'No disponible' }}</strong>
-            </div>
-
             <!-- TIPO DE VISITA -->
             <div class="detail-item">
-              <span>Tipo de visita</span>
-              <strong>{{ tipoVisita || 'No disponible' }}</strong>
+              <span>Estado</span>
+              <strong>{{ estado }}</strong>
             </div>
 
             <!-- SALA -->
@@ -163,8 +155,8 @@
 
             <!-- ADULTOS -->
             <div class="detail-item">
-              <span>Número de adultos</span>
-              <strong>{{ adultos }}</strong>
+              <span>Número de maestros</span>
+              <strong>{{ maestros }}</strong>
             </div>
 
             <!-- TOTAL DE ASISTENTES -->
@@ -177,34 +169,15 @@
 
         </div>
 
-        <!-- COSTO -->
-        <div class="total-section">
-
-          <div>
-            <span>Importe total de ejemplo</span>
-
-            <strong>
-              {{ total | currency:'MXN':'symbol':'1.0-0' }}
-            </strong>
-          </div>
-
-          <small>MXN</small>
-
-        </div>
-
-        <!-- AVISO -->
-        <div class="demo-notice">
-          Esta es una demostración visual.
-          No se ha registrado ninguna reservación.
-        </div>
+        <div class="demo-notice">La reservación quedó registrada con estado {{ estado }}.</div>
 
         <!-- BOTONES -->
         <div class="confirmation-actions">
 
           <a
             class="primary-button"
-            routerLink="/taquilla">
-            Volver al inicio
+            routerLink="/reservaciones">
+            Ver reservaciones
           </a>
 
           <a

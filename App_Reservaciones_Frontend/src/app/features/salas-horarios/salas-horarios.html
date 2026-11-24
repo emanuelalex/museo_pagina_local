@@ -1,0 +1,26 @@
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">✦</div><div><h2>Descubre</h2><span>MUSEO INTERACTIVO</span></div></div>
+    <nav class="sidebar-menu">
+      <a class="menu-item" routerLink="/taquilla"><span class="menu-icon">⌂</span>Inicio</a>
+      <a class="menu-item active" routerLink="/salas-horarios"><span class="menu-icon">▦</span>Salas y horarios</a>
+      <a *ngIf="esAdmin" class="menu-item" routerLink="/reservaciones/nueva"><span class="menu-icon">＋</span>Nueva reservación</a>
+      <a class="menu-item" routerLink="/reservaciones"><span class="menu-icon">☷</span>Reservaciones</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="help-card"><span class="help-icon">?</span><strong>¿Necesitas ayuda?</strong><p>Consulta la guía del sistema</p><a routerLink="/taquilla">Ver guía ›</a></div><a class="logout-link" routerLink="/login" (click)="cerrarSesion()">↪ Cerrar sesión</a></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div class="crumb">Museo Descubre <span>›</span> <strong>Salas y horarios</strong></div><div class="user"><span class="avatar">{{ esAdmin ? 'AD' : 'SU' }}</span><div><strong>{{ nombreUsuario }}</strong><small>{{ esAdmin ? 'Administración' : 'Supervisor · Solo consulta' }}</small></div></div></header>
+    <div class="content">
+      <p class="eyebrow">INFORMACIÓN DEL MUSEO</p><h1>Salas y horarios</h1><p class="subtitle">Consulta los horarios de las experiencias y salas, así como los costos de acceso.</p>
+      <section class="section"><div class="section-title"><div><h2>Experiencias</h2><p>Horarios por día de visita</p></div><span class="tag">Martes a domingo</span></div>
+        <div class="experience-grid">
+          <article class="experience" *ngFor="let exp of experiencias"><div class="experience-icon" [style.backgroundColor]="exp.color"><strong>{{ exp.icono }}</strong></div><div class="experience-info"><h3>{{ exp.nombre }}</h3><div class="schedule"><div><span class="days">{{ exp.detalleSemana }}</span><p *ngFor="let hora of exp.semana">{{ hora }}</p></div><div><span class="days">{{ exp.detalleFin }}</span><p *ngFor="let hora of exp.fin">{{ hora }}</p></div></div></div></article>
+        </div>
+      </section>
+      <section class="section"><div class="section-title"><div><h2>Salas</h2><p>Horarios disponibles de las salas</p></div></div><div class="rooms-grid"><article class="room" *ngFor="let sala of salas" [style.--room-color]="sala.color"><span class="room-label">SALA</span><h3>{{ sala.nombre }}</h3><p class="room-days">Martes a domingo</p><div class="times"><span *ngFor="let hora of sala.horarios">{{ hora }}</span></div></article></div></section>
+      <section class="section pricing-section"><div class="section-title"><div><h2>Costos de acceso</h2><p>Entrada general al Museo Descubre</p></div></div><div class="price-grid"><article class="price-card"><span>ADULTOS</span><strong>$89 <small>MXN</small></strong></article><article class="price-card"><span>NIÑOS</span><strong>$68 <small>MXN</small></strong></article></div><div class="included"><strong>Tu entrada incluye</strong><p>Acceso a todas las áreas y salas del museo.</p><p class="discount">50% de descuento a adultos mayores de 65 años.</p></div><p class="availability-note">Sujeto a disponibilidad de horarios y capacidad de las salas. Contenido y funciones sujetos a disposición por mantenimiento.</p></section>
+      <section class="museum-hours"><div class="hours-icon">◷</div><div><h2>Horario del museo</h2><p><strong>Martes a viernes:</strong> 9:00 a. m. a 6:00 p. m.</p><p><strong>Sábados y domingos:</strong> 11:00 a. m. a 7:00 p. m.</p></div></section>
+    </div>
+  </main>
+</div>

@@ -26,14 +26,14 @@ export class Login {
   cargando = false;
   errorMensaje = '';
 
-  perfilSeleccionado: 'taquilla' | 'admin' = 'taquilla';
+  perfilSeleccionado: 'usuario' | 'admin' = 'usuario';
 
   loginForm = this.fb.nonNullable.group({
     usuario: ['', Validators.required],
     password: ['', Validators.required]
   });
 
-  seleccionarPerfil(perfil: 'taquilla' | 'admin'): void {
+  seleccionarPerfil(perfil: 'usuario' | 'admin'): void {
     this.perfilSeleccionado = perfil;
     this.errorMensaje = '';
   }
@@ -67,11 +67,7 @@ export class Login {
           return;
         }
 
-        if (respuesta.rol === 'admin') {
-          this.router.navigate(['/admin']);
-        } else {
-          this.router.navigate(['/taquilla']);
-        }
+        this.router.navigate(['/taquilla']);
       },
       error: (error: HttpErrorResponse) => {
         this.cargando = false;

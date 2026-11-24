@@ -55,6 +55,18 @@ function autenticar(req, res, next) {
     }
 }
 
+async function permisoConsulta(req, res, next) {
+    try {
+        const [filas] = await pool.execute('SELECT rol FROM usuarios WHERE id = ?', [req.auth.id]);
+        if (!filas.length || filas[0].rol !== req.auth.rol || !['admin', 'usuario'].includes(req.auth.rol)) {
+            return res.status(403).json({ mensaje: 'No tienes permisos de consulta.' });
+        }
+        next();
+    } catch (error) {
+        res.status(500).json({ mensaje: 'No se pudieron comprobar los permisos.' });
+    }
+}
+
 function soloAdmin(req, res, next) {
     if (req.auth.rol !== 'admin') {
         return res.status(403).json({
@@ -238,7 +250,7 @@ app.get('/api/sesion', autenticar, async (req, res) => {
 // Tabla: escuelas
 // =============================================
 
-app.get('/api/escuelas', autenticar, soloAdmin, async (req, res) => {
+app.get('/api/escuelas', autenticar, permisoConsulta, async (req, res) => {
     try {
         const [filas] = await pool.execute(
             'SELECT * FROM escuelas ORDER BY id_escuela DESC'
@@ -300,7 +312,7 @@ app.post('/api/escuelas', autenticar, soloAdmin, async (req, res) => {
 // Tabla: responsables
 // =============================================
 
-app.get('/api/responsables', autenticar, soloAdmin, async (req, res) => {
+app.get('/api/responsables', autenticar, permisoConsulta, async (req, res) => {
     try {
         const [filas] = await pool.execute(
             'SELECT * FROM responsables ORDER BY id_responsable DESC'
@@ -431,7 +443,7 @@ app.post('/api/grupos', autenticar, soloAdmin, async (req, res) => {
 // Tabla: salas
 // =============================================
 
-app.get('/api/salas', autenticar, soloAdmin, async (req, res) => {
+app.get('/api/salas', autenticar, permisoConsulta, async (req, res) => {
     try {
         const [filas] = await pool.execute(
             'SELECT * FROM salas ORDER BY id_sala DESC'
@@ -494,7 +506,7 @@ app.post('/api/salas', autenticar, soloAdmin, async (req, res) => {
 // Tabla: horarios
 // =============================================
 
-app.get('/api/horarios', autenticar, soloAdmin, async (req, res) => {
+app.get('/api/horarios', autenticar, permisoConsulta, async (req, res) => {
     try {
         const [filas] = await pool.execute(
             'SELECT * FROM horarios ORDER BY hora_inicio'
@@ -552,13 +564,13 @@ app.post('/api/horarios', autenticar, soloAdmin, async (req, res) => {
 // Tabla: citas
 // =============================================
 
-app.get('/api/citas', autenticar, soloAdmin, async (req, res) => {
+app.get('/api/citas', autenticar, permisoConsulta, async (req, res) => {
     try {
         const [filas] = await pool.execute(
             `SELECT id_cita, id_escuela, id_responsable,
                     DATE_FORMAT(fecha_visita, '%Y-%m-%d') AS fecha_visita,
                     hora_llegada, cantidad_alumnos, cantidad_maestros,
-                    observaciones, estado
+                    observaciones, estado, registrado_por
              FROM citas
              ORDER BY fecha_visita DESC, id_cita DESC`
         );
@@ -641,6 +653,16 @@ app.post('/api/citas', autenticar, soloAdmin, async (req, res) => {
         conexion = await pool.getConnection();
         await conexion.beginTransaction();
 
+        const [creadores] = await conexion.execute(
+            'SELECT usuario FROM usuarios WHERE id = ? AND rol = ?',
+            [req.auth.id, 'admin']
+        );
+        if (!creadores.length) {
+            await conexion.rollback();
+            return res.status(403).json({ mensaje: 'El usuario ya no tiene acceso. Inicia sesión nuevamente.' });
+        }
+        const registradoPor = creadores[0].usuario;
+
         // Validar que cada sala y horario existan, estén activos
         // y que la sala tenga capacidad suficiente.
         for (const asignacion of asignaciones) {
@@ -678,8 +700,8 @@ app.post('/api/citas', autenticar, soloAdmin, async (req, res) => {
         const [resultado] = await conexion.execute(
             `INSERT INTO citas
              (id_escuela, id_responsable, fecha_visita, hora_llegada,
-              cantidad_alumnos, cantidad_maestros, observaciones, estado)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'Pendiente')`,
+              cantidad_alumnos, cantidad_maestros, observaciones, estado, registrado_por)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'Pendiente', ?)`,
             [
                 Number(id_escuela),
                 Number(id_responsable),
@@ -687,7 +709,8 @@ app.post('/api/citas', autenticar, soloAdmin, async (req, res) => {
                 hora_llegada ? hora_llegada + ':00' : null,
                 Number(cantidad_alumnos),
                 Number(cantidad_maestros ?? 0),
-                valorOpcional(observaciones)
+                valorOpcional(observaciones),
+                registradoPor
             ]
         );
 
@@ -709,7 +732,8 @@ app.post('/api/citas', autenticar, soloAdmin, async (req, res) => {
 
         res.status(201).json({
             mensaje: 'Cita registrada correctamente.',
-            id_cita: idCita
+            id_cita: idCita,
+            registrado_por: registradoPor
         });
 
     } catch (error) {
@@ -747,7 +771,7 @@ app.post('/api/citas', autenticar, soloAdmin, async (req, res) => {
 // CONSULTAR LAS SALAS ASIGNADAS A UNA CITA
 // =============================================
 
-app.get('/api/citas/:id/salas', autenticar, soloAdmin, async (req, res) => {
+app.get('/api/citas/:id/salas', autenticar, permisoConsulta, async (req, res) => {
     try {
         if (!esNumeroPositivo(req.params.id)) {
             return res.status(400).json({
@@ -823,6 +847,39 @@ app.patch('/api/citas/:id/estado', autenticar, soloAdmin, async (req, res) => {
     }
 });
 
+// Eliminar una cita y sus asignaciones de forma atómica.
+app.delete('/api/citas/:id', autenticar, soloAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+        return res.status(400).json({ mensaje: 'Identificador de cita inválido.' });
+    }
+    let conexion;
+    try {
+        conexion = await pool.getConnection();
+        await conexion.beginTransaction();
+        const [filas] = await conexion.execute(
+            'SELECT id_cita FROM citas WHERE id_cita = ? FOR UPDATE', [id]);
+        if (!filas.length) {
+            await conexion.rollback();
+            return res.status(404).json({ mensaje: 'No se encontró la cita.' });
+        }
+        await conexion.execute('DELETE FROM cita_salas WHERE id_cita = ?', [id]);
+        await conexion.execute('DELETE FROM citas WHERE id_cita = ?', [id]);
+        await conexion.commit();
+        return res.json({ mensaje: 'Reservación eliminada correctamente.' });
+    } catch (error) {
+        if (conexion) {
+            try { await conexion.rollback(); } catch (e) { console.error('Error al revertir:', e); }
+        }
+        console.error('Error al eliminar cita:', error);
+        return res.status(error.code === 'ER_ROW_IS_REFERENCED_2' ? 409 : 500).json({
+            mensaje: 'No se pudo eliminar la reservación. Consulta el listado antes de reintentar.'
+        });
+    } finally {
+        if (conexion) conexion.release();
+    }
+});
+
 // =============================================
 // INICIAR SERVIDOR
 // =============================================
@@ -830,7 +887,7 @@ app.patch('/api/citas/:id/estado', autenticar, soloAdmin, async (req, res) => {
 async function iniciarServidor() {
     try {
         if (!process.env.JWT_SECRET) {
-            throw new Error('Falta configurar JWT_SECRET en el archivo .env');
+            throw new Error('Falla al configurar JWT_SECRET en el archivo .env');
         }
 
         await pool.query('SELECT 1');

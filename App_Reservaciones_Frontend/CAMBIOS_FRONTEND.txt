@@ -1,0 +1,27 @@
+CAMBIOS REALIZADOS EN EL FRONTEND
+
+- Se conservaron los archivos CSS originales sin modificaciones.
+- Se conectó el login con POST /api/login y se guarda el JWT en sessionStorage.
+- Se valida la sesión con GET /api/sesion y se protege el área administrativa.
+- Se configuró el proxy de Angular para enviar /api al backend http://localhost:3000.
+- El panel principal consulta citas, escuelas y salas reales; ya no usa las cifras de demostración.
+- El formulario registra citas con los campos que espera POST /api/citas y carga los catálogos reales.
+- La lista consulta citas, escuelas, responsables y salas/horarios asignados.
+- La cancelación usa PATCH /api/citas/:id/estado.
+- La confirmación muestra el ID de cita que devuelve el backend.
+
+LIMITACIONES DEL BACKEND ACTUAL QUE SE RESPETARON
+
+- No existe endpoint para editar una cita; por eso el botón Editar permanece deshabilitado y no simula guardar cambios.
+- La base de datos/backend no calcula importes o precios; se retiraron los totales ficticios.
+- Las rutas de gestión consultadas están protegidas para rol admin. Las cuentas con rol usuario no pueden acceder a estas funciones.
+- El formulario asigna una sala y un horario por cita desde la interfaz actual. El endpoint acepta un arreglo de asignaciones y el formulario envía una asignación.
+
+EJECUCIÓN
+
+1. Iniciar MySQL y el backend en http://localhost:3000.
+2. En esta carpeta ejecutar npm install.
+3. Ejecutar npm start.
+4. Abrir la URL local que indique Angular CLI.
+
+La compilación de Angular no pudo ejecutarse en este entorno porque npm ci no pudo descargar todas las dependencias. Se revisó la sintaxis de los 23 archivos TypeScript; no se encontraron errores sintácticos. Es necesario ejecutar npm install y npm run build en el equipo local para confirmar la compilación completa.
