@@ -107,6 +107,35 @@ export class Checkout {
   escuelaCreadaPendiente: Escuela | null = null;
   faseGuardadoEscuela = 'Guardando escuela...';
 
+  // Validaciones en tiempo real de correo y teléfono (campos opcionales).
+  private readonly patronCorreo = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+  private readonly patronTelefono = /^\d{10}$/;
+
+  correoValido(valor: string): boolean {
+    const limpio = (valor || '').trim();
+    return !limpio || this.patronCorreo.test(limpio);
+  }
+
+  telefonoValido(valor: string): boolean {
+    const limpio = (valor || '').replace(/\D/g, '');
+    return !limpio || this.patronTelefono.test(limpio);
+  }
+
+  filtrarTelefonoEscuela(valor: string): void {
+    this.nuevaEscuela.telefono = (valor || '').replace(/\D/g, '').slice(0, 10);
+  }
+
+  filtrarTelefonoResponsable(valor: string): void {
+    this.nuevoResponsable.telefono = (valor || '').replace(/\D/g, '').slice(0, 10);
+  }
+
+  get contactosValidos(): boolean {
+    return this.correoValido(this.nuevaEscuela.correo) &&
+      this.telefonoValido(this.nuevaEscuela.telefono) &&
+      this.correoValido(this.nuevoResponsable.correo) &&
+      this.telefonoValido(this.nuevoResponsable.telefono);
+  }
+
   abrirModalEscuela(): void {
     this.errorEscuela = '';
     this.mostrarModalEscuela = true;
@@ -139,6 +168,10 @@ export class Checkout {
     }
     if (!datosResponsable.nombre || !datosResponsable.apellido) {
       this.errorEscuela = 'Escribe el nombre y apellido del responsable.';
+      return;
+    }
+    if (!this.contactosValidos) {
+      this.errorEscuela = 'Corrige los correos o teléfonos. Los correos deben tener formato válido y los teléfonos deben contener 10 dígitos.';
       return;
     }
 
