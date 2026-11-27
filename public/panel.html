@@ -1,0 +1,916 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de administración | Museo</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f4f9;
+      color: #263247;
+    }
+
+    header {
+      background: #173b67;
+      color: white;
+      padding: 22px;
+    }
+
+    header h1 { margin: 0 0 8px; }
+
+    header p { margin: 0; }
+
+    .contenedor {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    nav button {
+      width: auto;
+      margin: 0;
+      background: #dce6f3;
+      color: #173b67;
+    }
+
+    nav button.activo,
+    nav button:hover {
+      background: #1769e0;
+      color: white;
+    }
+
+    button {
+      padding: 11px 15px;
+      border: 0;
+      border-radius: 7px;
+      background: #1769e0;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover { background: #1054b8; }
+
+    .salir { background: #b42318; }
+
+    .seccion {
+      display: none;
+      background: white;
+      padding: 22px;
+      border-radius: 12px;
+      box-shadow: 0 3px 15px #0000000a;
+      margin-bottom: 20px;
+    }
+
+    .seccion.visible { display: block; }
+
+    h2 { margin-top: 0; color: #173b67; }
+
+    h3 { margin-top: 24px; }
+
+    .formulario {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .completo { grid-column: 1 / -1; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font: inherit;
+      background: white;
+    }
+
+    textarea {
+      min-height: 85px;
+      resize: vertical;
+    }
+
+    .acciones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .mensaje {
+      min-height: 20px;
+      overflow-wrap: anywhere;
+    }
+
+    .tabla-contenedor {
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 650px;
+    }
+
+    th, td {
+      padding: 11px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th { background: #edf3fa; }
+
+    .fila-sala {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 8px;
+      margin: 10px 0;
+      align-items: center;
+    }
+
+    .secundario {
+      background: #64748b;
+    }
+
+    .nota {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    @media (max-width: 650px) {
+      .formulario { grid-template-columns: 1fr; }
+      .completo { grid-column: auto; }
+      .fila-sala { grid-template-columns: 1fr; }
+      .contenedor { padding: 12px; }
+      .seccion { padding: 15px; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>Panel de administración del museo</h1>
+  <p>Gestión de escuelas, grupos, salas, horarios y visitas escolares.</p>
+</header>
+
+<div class="contenedor">
+  <nav id="navegacion">
+    <button type="button" class="activo" data-seccion="escuelas">Escuelas</button>
+    <button type="button" data-seccion="responsables">Responsables</button>
+    <button type="button" data-seccion="grupos">Grupos</button>
+    <button type="button" data-seccion="salas">Salas</button>
+    <button type="button" data-seccion="horarios">Horarios</button>
+    <button type="button" data-seccion="citas">Citas</button>
+    <button type="button" class="salir" id="cerrarSesion">Cerrar sesión</button>
+  </nav>
+
+  <p id="mensajeGeneral" class="mensaje" role="status"></p>
+
+  <!-- ESCUELAS -->
+  <section id="escuelas" class="seccion visible">
+    <h2>Registro de escuelas</h2>
+
+    <form id="formEscuela" class="formulario">
+      <div class="campo">
+        <label for="escNombre">Nombre de la escuela *</label>
+        <input id="escNombre" name="nombre" required maxlength="150">
+      </div>
+
+      <div class="campo">
+        <label for="escClave">Clave de la escuela</label>
+        <input id="escClave" name="clave_escuela" maxlength="50">
+      </div>
+
+      <div class="campo">
+        <label for="escTipo">Tipo de escuela</label>
+        <select id="escTipo" name="tipo_escuela">
+          <option value="">Selecciona</option>
+          <option>Preescolar</option>
+          <option>Primaria</option>
+          <option>Secundaria</option>
+          <option>Preparatoria</option>
+          <option>Universidad</option>
+          <option>Otra</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="escTelefono">Teléfono</label>
+        <input id="escTelefono" name="telefono" maxlength="20">
+      </div>
+
+      <div class="campo">
+        <label for="escCorreo">Correo electrónico</label>
+        <input id="escCorreo" name="correo" type="email" maxlength="100">
+      </div>
+
+      <div class="campo">
+        <label for="escDireccion">Dirección</label>
+        <input id="escDireccion" name="direccion" maxlength="200">
+      </div>
+
+      <div class="completo">
+        <button type="submit">Registrar escuela</button>
+      </div>
+    </form>
+
+    <h3>Escuelas registradas</h3>
+    <div id="tablaEscuelas" class="tabla-contenedor"></div>
+  </section>
+
+  <!-- RESPONSABLES -->
+  <section id="responsables" class="seccion">
+    <h2>Registro de responsables</h2>
+
+    <form id="formResponsable" class="formulario">
+      <div class="campo completo">
+        <label for="respEscuela">Escuela *</label>
+        <select id="respEscuela" name="id_escuela" required></select>
+      </div>
+
+      <div class="campo">
+        <label for="respNombre">Nombre *</label>
+        <input id="respNombre" name="nombre" required maxlength="100">
+      </div>
+
+      <div class="campo">
+        <label for="respApellido">Apellido *</label>
+        <input id="respApellido" name="apellido" required maxlength="100">
+      </div>
+
+      <div class="campo">
+        <label for="respTelefono">Teléfono</label>
+        <input id="respTelefono" name="telefono" maxlength="20">
+      </div>
+
+      <div class="campo">
+        <label for="respCorreo">Correo</label>
+        <input id="respCorreo" name="correo" type="email" maxlength="100">
+      </div>
+
+      <div class="campo completo">
+        <label for="respCargo">Cargo</label>
+        <input id="respCargo" name="cargo" maxlength="100"
+               placeholder="Ej. Director, docente">
+      </div>
+
+      <div class="completo">
+        <button type="submit">Registrar responsable</button>
+      </div>
+    </form>
+
+    <h3>Responsables registrados</h3>
+    <div id="tablaResponsables" class="tabla-contenedor"></div>
+  </section>
+
+  <!-- GRUPOS -->
+  <section id="grupos" class="seccion">
+    <h2>Registro de grupos escolares</h2>
+
+    <form id="formGrupo" class="formulario">
+      <div class="campo completo">
+        <label for="grupoEscuela">Escuela *</label>
+        <select id="grupoEscuela" name="id_escuela" required></select>
+      </div>
+
+      <div class="campo">
+        <label for="grado">Grado</label>
+        <input id="grado" name="grado" maxlength="30"
+               placeholder="Ej. 3°">
+      </div>
+
+      <div class="campo">
+        <label for="grupo">Grupo</label>
+        <input id="grupo" name="grupo" maxlength="20"
+               placeholder="Ej. A">
+      </div>
+
+      <div class="campo">
+        <label for="alumnos">Cantidad de alumnos *</label>
+        <input id="alumnos" name="cantidad_alumnos"
+               type="number" min="1" required>
+      </div>
+
+      <div class="campo">
+        <label for="maestros">Cantidad de maestros</label>
+        <input id="maestros" name="cantidad_maestros"
+               type="number" min="0" value="0">
+      </div>
+
+      <div class="completo">
+        <button type="submit">Registrar grupo</button>
+      </div>
+    </form>
+
+    <h3>Grupos registrados</h3>
+    <div id="tablaGrupos" class="tabla-contenedor"></div>
+  </section>
+
+  <!-- SALAS -->
+  <section id="salas" class="seccion">
+    <h2>Registro de salas del museo</h2>
+
+    <form id="formSala" class="formulario">
+      <div class="campo">
+        <label for="salaNombre">Nombre de la sala *</label>
+        <input id="salaNombre" name="nombre" required maxlength="100">
+      </div>
+
+      <div class="campo">
+        <label for="salaCapacidad">Capacidad de personas *</label>
+        <input id="salaCapacidad" name="capacidad"
+               type="number" min="1" required>
+      </div>
+
+      <div class="campo">
+        <label for="salaDuracion">Duración en minutos *</label>
+        <input id="salaDuracion" name="duracion_minutos"
+               type="number" min="1" required>
+      </div>
+
+      <div class="campo">
+        <label for="salaActiva">Estado</label>
+        <select id="salaActiva" name="activa">
+          <option value="1">Activa</option>
+          <option value="0">Inactiva</option>
+        </select>
+      </div>
+
+      <div class="campo completo">
+        <label for="salaDescripcion">Descripción</label>
+        <textarea id="salaDescripcion" name="descripcion"></textarea>
+      </div>
+
+      <div class="completo">
+        <button type="submit">Registrar sala</button>
+      </div>
+    </form>
+
+    <h3>Salas registradas</h3>
+    <div id="tablaSalas" class="tabla-contenedor"></div>
+  </section>
+
+  <!-- HORARIOS -->
+  <section id="horarios" class="seccion">
+    <h2>Registro de horarios</h2>
+
+    <form id="formHorario" class="formulario">
+      <div class="campo">
+        <label for="horaInicio">Hora de inicio *</label>
+        <input id="horaInicio" name="hora_inicio"
+               type="time" required>
+      </div>
+
+      <div class="campo">
+        <label for="horaFin">Hora de fin *</label>
+        <input id="horaFin" name="hora_fin"
+               type="time" required>
+      </div>
+
+      <div class="campo">
+        <label for="horarioActivo">Estado</label>
+        <select id="horarioActivo" name="activo">
+          <option value="1">Activo</option>
+          <option value="0">Inactivo</option>
+        </select>
+      </div>
+
+      <div class="completo">
+        <button type="submit">Registrar horario</button>
+      </div>
+    </form>
+
+    <h3>Horarios registrados</h3>
+    <div id="tablaHorarios" class="tabla-contenedor"></div>
+  </section>
+
+  <!-- CITAS -->
+  <section id="citas" class="seccion">
+    <h2>Agendar visita escolar</h2>
+
+    <form id="formCita" class="formulario">
+      <div class="campo">
+        <label for="citaEscuela">Escuela *</label>
+        <select id="citaEscuela" name="id_escuela" required></select>
+      </div>
+
+      <div class="campo">
+        <label for="citaResponsable">Responsable *</label>
+        <select id="citaResponsable" name="id_responsable" required></select>
+      </div>
+
+      <div class="campo">
+        <label for="fechaVisita">Fecha de visita *</label>
+        <input id="fechaVisita" name="fecha_visita"
+               type="date" required>
+      </div>
+
+      <div class="campo">
+        <label for="horaLlegada">Hora de llegada</label>
+        <input id="horaLlegada" name="hora_llegada" type="time">
+      </div>
+
+      <div class="campo">
+        <label for="citaAlumnos">Cantidad de alumnos *</label>
+        <input id="citaAlumnos" name="cantidad_alumnos"
+               type="number" min="1" required>
+      </div>
+
+      <div class="campo">
+        <label for="citaMaestros">Cantidad de maestros</label>
+        <input id="citaMaestros" name="cantidad_maestros"
+               type="number" min="0" value="0">
+      </div>
+
+      <div class="campo completo">
+        <label for="observaciones">Observaciones</label>
+        <textarea id="observaciones" name="observaciones"
+          placeholder="Información adicional de la visita"></textarea>
+      </div>
+
+      <div class="completo">
+        <h3>Asignar salas y horarios</h3>
+        <p class="nota">
+          Selecciona las salas que visitará el grupo y el horario de cada una.
+        </p>
+
+        <div id="asignaciones"></div>
+
+        <button type="button" id="agregarAsignacion" class="secundario">
+          + Agregar otra sala
+        </button>
+      </div>
+
+      <div class="completo">
+        <button type="submit">Registrar cita</button>
+      </div>
+    </form>
+
+    <h3>Citas registradas</h3>
+    <div id="tablaCitas" class="tabla-contenedor"></div>
+  </section>
+</div>
+
+<script>
+  const token = sessionStorage.getItem('token');
+
+  if (!token) {
+    window.location.replace('/');
+  }
+
+  const $ = (id) => document.getElementById(id);
+
+  let escuelas = [];
+  let responsables = [];
+  let salas = [];
+  let horarios = [];
+
+  function mostrarMensaje(texto) {
+    $('mensajeGeneral').textContent = texto;
+  }
+
+  function escapar(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[caracter]);
+  }
+
+  async function api(ruta, opciones = {}) {
+    const respuesta = await fetch(ruta, {
+      ...opciones,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token,
+        ...(opciones.headers || {})
+      }
+    });
+
+    const texto = await respuesta.text();
+    let resultado = {};
+
+    try {
+      resultado = texto ? JSON.parse(texto) : {};
+    } catch {
+      resultado = { mensaje: texto || 'Respuesta no válida del servidor' };
+    }
+
+    if (respuesta.status === 401 || respuesta.status === 403) {
+      if (respuesta.status === 401) {
+        sessionStorage.removeItem('token');
+        window.location.replace('/');
+      }
+
+      throw new Error(
+        resultado.mensaje || 'No tienes permiso para realizar esta acción.'
+      );
+    }
+
+    if (!respuesta.ok) {
+      throw new Error(resultado.mensaje || 'Error en la solicitud.');
+    }
+
+    return resultado;
+  }
+
+  function lista(resultado) {
+    if (Array.isArray(resultado)) return resultado;
+    if (Array.isArray(resultado.datos)) return resultado.datos;
+    if (Array.isArray(resultado.resultados)) return resultado.resultados;
+    return [];
+  }
+
+  function opcionesSelect(elemento, datos, idCampo, textoFn, placeholder) {
+    elemento.innerHTML =
+      '<option value="">' + escapar(placeholder) + '</option>' +
+      datos.map(item =>
+        '<option value="' + escapar(item[idCampo]) + '">' +
+          escapar(textoFn(item)) +
+        '</option>'
+      ).join('');
+  }
+
+  function dibujarTabla(id, columnas, datos) {
+    const contenedor = $(id);
+
+    if (!datos.length) {
+      contenedor.innerHTML = '<p>No hay registros disponibles.</p>';
+      return;
+    }
+
+    contenedor.innerHTML =
+      '<table><thead><tr>' +
+      columnas.map(col => '<th>' + escapar(col.titulo) + '</th>').join('') +
+      '</tr></thead><tbody>' +
+      datos.map(fila =>
+        '<tr>' + columnas.map(col =>
+          '<td>' + escapar(col.valor(fila)) + '</td>'
+        ).join('') + '</tr>'
+      ).join('') +
+      '</tbody></table>';
+  }
+
+  function datosFormulario(formulario) {
+    return Object.fromEntries(new FormData(formulario).entries());
+  }
+
+  async function registrar(formulario, ruta, preparar, recargar) {
+    const boton = formulario.querySelector('button[type="submit"]');
+    boton.disabled = true;
+
+    try {
+      const datos = preparar
+        ? preparar(datosFormulario(formulario))
+        : datosFormulario(formulario);
+
+      const resultado = await api(ruta, {
+        method: 'POST',
+        body: JSON.stringify(datos)
+      });
+
+      mostrarMensaje(resultado.mensaje || 'Registro guardado correctamente.');
+      formulario.reset();
+
+      if (recargar) await recargar();
+
+    } catch (error) {
+      mostrarMensaje(error.message);
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  async function cargarEscuelas() {
+    escuelas = lista(await api('/api/escuelas'));
+
+    dibujarTabla('tablaEscuelas', [
+      { titulo: 'ID', valor: x => x.id_escuela },
+      { titulo: 'Nombre', valor: x => x.nombre },
+      { titulo: 'Clave', valor: x => x.clave_escuela },
+      { titulo: 'Tipo', valor: x => x.tipo_escuela },
+      { titulo: 'Teléfono', valor: x => x.telefono },
+      { titulo: 'Correo', valor: x => x.correo },
+      { titulo: 'Dirección', valor: x => x.direccion }
+    ], escuelas);
+
+    opcionesSelect($('respEscuela'), escuelas, 'id_escuela',
+      x => x.nombre, 'Selecciona una escuela');
+
+    opcionesSelect($('grupoEscuela'), escuelas, 'id_escuela',
+      x => x.nombre, 'Selecciona una escuela');
+
+    opcionesSelect($('citaEscuela'), escuelas, 'id_escuela',
+      x => x.nombre, 'Selecciona una escuela');
+  }
+
+  async function cargarResponsables() {
+    responsables = lista(await api('/api/responsables'));
+
+    dibujarTabla('tablaResponsables', [
+      { titulo: 'ID', valor: x => x.id_responsable },
+      { titulo: 'Escuela ID', valor: x => x.id_escuela },
+      { titulo: 'Nombre', valor: x => x.nombre },
+      { titulo: 'Apellido', valor: x => x.apellido },
+      { titulo: 'Teléfono', valor: x => x.telefono },
+      { titulo: 'Correo', valor: x => x.correo },
+      { titulo: 'Cargo', valor: x => x.cargo }
+    ], responsables);
+
+    actualizarResponsablesCita();
+  }
+
+  function actualizarResponsablesCita() {
+    const idEscuela = $('citaEscuela').value;
+
+    const filtrados = responsables.filter(r =>
+      !idEscuela || String(r.id_escuela) === String(idEscuela)
+    );
+
+    opcionesSelect($('citaResponsable'), filtrados,
+      'id_responsable',
+      x => x.nombre + ' ' + x.apellido,
+      'Selecciona un responsable');
+  }
+
+  async function cargarGrupos() {
+    const grupos = lista(await api('/api/grupos'));
+
+    dibujarTabla('tablaGrupos', [
+      { titulo: 'ID', valor: x => x.id_grupo },
+      { titulo: 'Escuela ID', valor: x => x.id_escuela },
+      { titulo: 'Grado', valor: x => x.grado },
+      { titulo: 'Grupo', valor: x => x.grupo },
+      { titulo: 'Alumnos', valor: x => x.cantidad_alumnos },
+      { titulo: 'Maestros', valor: x => x.cantidad_maestros }
+    ], grupos);
+  }
+
+  async function cargarSalas() {
+    salas = lista(await api('/api/salas'));
+
+    dibujarTabla('tablaSalas', [
+      { titulo: 'ID', valor: x => x.id_sala },
+      { titulo: 'Nombre', valor: x => x.nombre },
+      { titulo: 'Descripción', valor: x => x.descripcion },
+      { titulo: 'Capacidad', valor: x => x.capacidad },
+      { titulo: 'Duración (min)', valor: x => x.duracion_minutos },
+      { titulo: 'Activa', valor: x => Number(x.activa) ? 'Sí' : 'No' }
+    ], salas);
+  }
+
+  async function cargarHorarios() {
+    horarios = lista(await api('/api/horarios'));
+
+    dibujarTabla('tablaHorarios', [
+      { titulo: 'ID', valor: x => x.id_horario },
+      { titulo: 'Inicio', valor: x => x.hora_inicio },
+      { titulo: 'Fin', valor: x => x.hora_fin },
+      { titulo: 'Activo', valor: x => Number(x.activo) ? 'Sí' : 'No' }
+    ], horarios);
+  }
+
+  async function cargarCitas() {
+    const citas = lista(await api('/api/citas'));
+
+    dibujarTabla('tablaCitas', [
+      { titulo: 'ID', valor: x => x.id_cita },
+      { titulo: 'Escuela ID', valor: x => x.id_escuela },
+      { titulo: 'Responsable ID', valor: x => x.id_responsable },
+      { titulo: 'Fecha', valor: x => x.fecha_visita },
+      { titulo: 'Llegada', valor: x => x.hora_llegada },
+      { titulo: 'Alumnos', valor: x => x.cantidad_alumnos },
+      { titulo: 'Maestros', valor: x => x.cantidad_maestros },
+      { titulo: 'Estado', valor: x => x.estado }
+    ], citas);
+  }
+
+  function crearAsignacion() {
+    const fila = document.createElement('div');
+    fila.className = 'fila-sala';
+
+    const salaSelect = document.createElement('select');
+    salaSelect.required = true;
+    salaSelect.innerHTML =
+      '<option value="">Selecciona sala</option>' +
+      salas.filter(s => Number(s.activa) === 1).map(s =>
+        '<option value="' + escapar(s.id_sala) + '">' +
+        escapar(s.nombre) + ' (capacidad ' + escapar(s.capacidad) + ')' +
+        '</option>'
+      ).join('');
+
+    const horarioSelect = document.createElement('select');
+    horarioSelect.required = true;
+    horarioSelect.innerHTML =
+      '<option value="">Selecciona horario</option>' +
+      horarios.filter(h => Number(h.activo) === 1).map(h =>
+        '<option value="' + escapar(h.id_horario) + '">' +
+        escapar(h.hora_inicio) + ' - ' + escapar(h.hora_fin) +
+        '</option>'
+      ).join('');
+
+    const quitar = document.createElement('button');
+    quitar.type = 'button';
+    quitar.className = 'salir';
+    quitar.textContent = 'Quitar';
+    quitar.addEventListener('click', () => fila.remove());
+
+    fila.append(salaSelect, horarioSelect, quitar);
+    $('asignaciones').appendChild(fila);
+  }
+
+  $('navegacion').addEventListener('click', evento => {
+    const boton = evento.target.closest('button[data-seccion]');
+    if (!boton) return;
+
+    document.querySelectorAll('.seccion').forEach(seccion =>
+      seccion.classList.remove('visible')
+    );
+
+    document.querySelectorAll('nav button[data-seccion]').forEach(b =>
+      b.classList.remove('activo')
+    );
+
+    $(boton.dataset.seccion).classList.add('visible');
+    boton.classList.add('activo');
+    mostrarMensaje('');
+  });
+
+  $('cerrarSesion').addEventListener('click', () => {
+    sessionStorage.removeItem('token');
+    window.location.replace('/');
+  });
+
+  $('citaEscuela').addEventListener('change', actualizarResponsablesCita);
+
+  $('agregarAsignacion').addEventListener('click', crearAsignacion);
+
+  $('formEscuela').addEventListener('submit', evento => {
+    evento.preventDefault();
+
+    registrar($('formEscuela'), '/api/escuelas', datos => datos,
+      cargarEscuelas);
+  });
+
+  $('formResponsable').addEventListener('submit', evento => {
+    evento.preventDefault();
+
+    registrar($('formResponsable'), '/api/responsables', datos => ({
+      ...datos,
+      id_escuela: Number(datos.id_escuela)
+    }), cargarResponsables);
+  });
+
+  $('formGrupo').addEventListener('submit', evento => {
+    evento.preventDefault();
+
+    registrar($('formGrupo'), '/api/grupos', datos => ({
+      ...datos,
+      id_escuela: Number(datos.id_escuela),
+      cantidad_alumnos: Number(datos.cantidad_alumnos),
+      cantidad_maestros: Number(datos.cantidad_maestros || 0)
+    }), cargarGrupos);
+  });
+
+  $('formSala').addEventListener('submit', evento => {
+    evento.preventDefault();
+
+    registrar($('formSala'), '/api/salas', datos => ({
+      ...datos,
+      capacidad: Number(datos.capacidad),
+      duracion_minutos: Number(datos.duracion_minutos),
+      activa: Number(datos.activa)
+    }), cargarSalas);
+  });
+
+  $('formHorario').addEventListener('submit', evento => {
+    evento.preventDefault();
+
+    const datos = datosFormulario($('formHorario'));
+
+    if (datos.hora_fin <= datos.hora_inicio) {
+      mostrarMensaje('La hora de fin debe ser posterior a la hora de inicio.');
+      return;
+    }
+
+    registrar($('formHorario'), '/api/horarios', datos => ({
+      ...datos,
+      activo: Number(datos.activo)
+    }), cargarHorarios);
+  });
+
+  $('formCita').addEventListener('submit', async evento => {
+    evento.preventDefault();
+
+    const formulario = $('formCita');
+    const boton = formulario.querySelector('button[type="submit"]');
+    const filas = [...$('asignaciones').querySelectorAll('.fila-sala')];
+
+    if (!filas.length) {
+      mostrarMensaje('Agrega al menos una sala y un horario.');
+      return;
+    }
+
+    const asignaciones = filas.map(fila => {
+      const selects = fila.querySelectorAll('select');
+
+      return {
+        id_sala: Number(selects[0].value),
+        id_horario: Number(selects[1].value)
+      };
+    });
+
+    if (asignaciones.some(a => !a.id_sala || !a.id_horario)) {
+      mostrarMensaje('Selecciona una sala y un horario en cada fila.');
+      return;
+    }
+
+    if (new Set(asignaciones.map(a => a.id_sala + '-' + a.id_horario)).size
+        !== asignaciones.length) {
+      mostrarMensaje('No repitas la misma sala y horario.');
+      return;
+    }
+
+    const datos = datosFormulario(formulario);
+
+    datos.id_escuela = Number(datos.id_escuela);
+    datos.id_responsable = Number(datos.id_responsable);
+    datos.cantidad_alumnos = Number(datos.cantidad_alumnos);
+    datos.cantidad_maestros = Number(datos.cantidad_maestros || 0);
+    datos.asignaciones = asignaciones;
+
+    boton.disabled = true;
+
+    try {
+      const resultado = await api('/api/citas', {
+        method: 'POST',
+        body: JSON.stringify(datos)
+      });
+
+      mostrarMensaje(resultado.mensaje || 'Cita registrada correctamente.');
+      formulario.reset();
+      $('asignaciones').innerHTML = '';
+      crearAsignacion();
+
+      await cargarCitas();
+      actualizarResponsablesCita();
+
+    } catch (error) {
+      mostrarMensaje(error.message);
+    } finally {
+      boton.disabled = false;
+    }
+  });
+
+  async function iniciarPanel() {
+    try {
+      const sesion = await api('/api/sesion');
+
+      if (sesion.rol !== 'admin') {
+        sessionStorage.removeItem('token');
+        window.location.replace('/');
+        return;
+      }
+
+      await cargarEscuelas();
+      await cargarResponsables();
+      await cargarGrupos();
+      await cargarSalas();
+      await cargarHorarios();
+      await cargarCitas();
+
+      crearAsignacion();
+      mostrarMensaje('Panel conectado correctamente a la base de datos.');
+
+    } catch (error) {
+      mostrarMensaje(error.message);
+    }
+  }
+
+  iniciarPanel();
+</script>
+</body>
+</html>

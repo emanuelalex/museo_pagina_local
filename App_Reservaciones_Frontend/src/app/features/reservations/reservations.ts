@@ -182,7 +182,7 @@ export class Reservations implements OnInit {
                 responsable: responsable ? `${responsable.nombre} ${responsable.apellido}` : 'Responsable no disponible',
                 telefono: responsable?.telefono || '—',
                 sala: completo ? 'Recorrido completo' : asignaciones.map(a => a.sala).join(', ') || 'Sin sala asignada',
-                horarioCompleto: completo ? 'Sin horario individual' : asignaciones.map(a => `${a.hora_inicio.slice(0, 5)} - ${a.hora_fin.slice(0, 5)}`).join(', '),
+                horarioCompleto: asignaciones.map(a => `${a.hora_inicio.slice(0, 5)} - ${a.hora_fin.slice(0, 5)}`).join(', ') || 'Horario no disponible',
                 salasAsignadas: asignaciones
               } as ReservacionVista;
             })

@@ -665,37 +665,59 @@ app.post('/api/citas', autenticar, soloAdmin, async (req, res) => {
 
         // Validar que cada sala y horario existan, estén activos
         // y que la sala tenga capacidad suficiente.
-        for (const asignacion of asignaciones) {
-            const [salasValidas] = await conexion.execute(
-                `SELECT s.id_sala, s.capacidad
-                 FROM salas s
-                 WHERE s.id_sala = ?
-                   AND s.activa = 1
-                 FOR UPDATE`,
-                [Number(asignacion.id_sala)]
-            );
+for (const asignacion of asignaciones) {
+    const [salasValidas] = await conexion.execute(
+        `SELECT s.id_sala, s.capacidad
+         FROM salas s
+         WHERE s.id_sala = ?
+           AND s.activa = 1
+         FOR UPDATE`,
+        [Number(asignacion.id_sala)]
+    );
 
-            const [horariosValidos] = await conexion.execute(
-                `SELECT id_horario
-                 FROM horarios
-                 WHERE id_horario = ? AND activo = 1`,
-                [Number(asignacion.id_horario)]
-            );
+    const [horariosValidos] = await conexion.execute(
+        `SELECT id_horario
+         FROM horarios
+         WHERE id_horario = ? AND activo = 1`,
+        [Number(asignacion.id_horario)]
+    );
 
-            if (!salasValidas.length || !horariosValidos.length) {
-                throw new Error('Una sala o un horario no existe o está inactivo.');
-            }
+    if (!salasValidas.length || !horariosValidos.length) {
+        throw new Error('Una sala o un horario no existe o está inactivo.');
+    }
 
-            if (
-                Number(cantidad_alumnos) +
-                Number(cantidad_maestros ?? 0) >
-                Number(salasValidas[0].capacidad)
-            ) {
-                throw new Error(
-                    'La cantidad de alumnos y maestros supera la capacidad de una sala.'
-                );
-            }
-        }
+    if (
+        Number(cantidad_alumnos) +
+        Number(cantidad_maestros ?? 0) >
+        Number(salasValidas[0].capacidad)
+    ) {
+        throw new Error(
+            'La cantidad de alumnos y maestros supera la capacidad de una sala.'
+        );
+    }
+
+    // Comprobar si la sala y horario ya están reservados
+    // en la misma fecha de visita.
+    const [conflictos] = await conexion.execute(
+        `SELECT cs.id_cita_sala
+         FROM cita_salas cs
+         INNER JOIN citas c ON c.id_cita = cs.id_cita
+         WHERE cs.id_sala = ?
+           AND cs.id_horario = ?
+           AND c.fecha_visita = ?
+           AND c.estado <> 'Cancelada'
+         LIMIT 1`,
+        [
+            Number(asignacion.id_sala),
+            Number(asignacion.id_horario),
+            fecha_visita
+        ]
+    );
+
+    if (conflictos.length > 0) {
+        throw new Error('HORARIO_OCUPADO');
+    }
+}
 
         const [resultado] = await conexion.execute(
             `INSERT INTO citas
@@ -743,11 +765,17 @@ app.post('/api/citas', autenticar, soloAdmin, async (req, res) => {
 
         console.error('Error al registrar cita:', error);
 
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({
-                mensaje: 'Esa sala y ese horario ya están reservados según las restricciones de la base de datos.'
-            });
-        }
+if (error.message === 'HORARIO_OCUPADO') {
+    return res.status(409).json({
+        mensaje: 'Esa sala ya está reservada en ese horario y fecha.'
+    });
+}
+
+if (error.code === 'ER_DUP_ENTRY') {
+    return res.status(409).json({
+        mensaje: 'Existe un registro duplicado.'
+    });
+}
 
         if (error.message.includes('capacidad') ||
             error.message.includes('inactivo')) {
@@ -892,7 +920,7 @@ async function iniciarServidor() {
 
         await pool.query('SELECT 1');
 
-        app.listen(PORT, () => {
+        app.listen(PORT, '0.0.0.0', () => {
             console.log(`Servidor funcionando en http://localhost:${PORT}`);
             console.log('Conexión con MySQL verificada.');
         });
